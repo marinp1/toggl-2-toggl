@@ -131,7 +131,7 @@ export const getTimeEntriesWithStatus = async (
   }
 };
 
-const hoursToMilliseconds = (days: number) => {
+const hoursToMilliseconds = (days: number): number => {
   return days * 24 * 3600 * 1000;
 };
 

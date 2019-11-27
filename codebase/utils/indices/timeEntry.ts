@@ -9,4 +9,5 @@ export default {
   SECONDS_LOGGED: indexMapper('secondsLogged'),
   CREATION_DATE_TIME: indexMapper('creationDateTime'),
   UPDATE_DATE_TIME: indexMapper('updateDateTime'),
+  IS_THESIS: indexMapper('isThesisEntry'),
 };

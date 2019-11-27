@@ -9,6 +9,8 @@ Properties:
       AttributeType: S
     - AttributeName: synced
       AttributeType: B
+    - AttributeName: isThesisEntry
+      AttributeType: B
     - AttributeName: creationDateTime
       AttributeType: S
     - AttributeName: updateDateTime
@@ -26,6 +28,13 @@ Properties:
     - IndexName: synced-index
       KeySchema:
         - AttributeName: synced
+          KeyType: HASH
+      Projection:
+        ProjectionType: ALL
+      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
+    - IndexName: isThesisEntry-index
+      KeySchema:
+        - AttributeName: isThesisEntry
           KeyType: HASH
       Projection:
         ProjectionType: ALL

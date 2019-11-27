@@ -41,3 +41,4 @@ export interface TogglApiError {
 }
 
 export type TogglApiResponse<T> = TogglApiSuccess<T> | TogglApiError;
+export type TogglApiPlainResponse<T> = T | TogglApiError;

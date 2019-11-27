@@ -5,6 +5,8 @@ export interface IDynamoTimeEntry {
   synced: boolean;
   creationDateTime: string;
   updateDateTime: string;
+  isThesisEntry: boolean;
+  description: string;
   entryIdTo?: string;
   resolvedEntryName?: string;
 }
@@ -19,6 +21,8 @@ export interface ITimeEntry {
   synced: boolean;
   creationDateTime: Date;
   updateDateTime: Date;
+  isThesisEntry: boolean;
+  description: string;
   createdEntry: {
     id: string;
     name: string;
@@ -27,7 +31,9 @@ export interface ITimeEntry {
 
 export interface ITogglEntry {
   id: string;
+  isThesisEntry: boolean;
   secondsLogged: number;
+  description: string;
   running: boolean;
   status: typeof ENTRY_STATUSES[number];
   updateDateTime: string;

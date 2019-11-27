@@ -1,4 +1,4 @@
-import { TogglApiResponse, TogglApiError } from '@types';
+import { TogglApiError } from '@types';
 
 export const generateApiQueryString = (req: object): string =>
   Object.entries(req)
@@ -6,8 +6,6 @@ export const generateApiQueryString = (req: object): string =>
     .map(([key, value]) => `${key}=${String(value)}`)
     .join('&');
 
-export const isTogglApiError = (
-  res: TogglApiResponse<object, object>,
-): res is TogglApiError => {
+export const isTogglApiError = (res: object): res is TogglApiError => {
   return !!(res as TogglApiError).error;
 };

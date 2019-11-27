@@ -6,17 +6,16 @@ import { generateApiQueryString, isTogglApiError } from '@utils/api';
 import {
   TogglGetTimeEntriesBody,
   TogglTimeEntryBody,
-  TogglApiResponse,
+  TogglApiPlainResponse,
   ITogglEntry,
 } from '@types';
 
-const TOGGL_API_BASE_URL = 'https://toggl.com/api/v8';
-const TOGGL_API_BASE_URL_ENTRIES = `${TOGGL_API_BASE_URL}/time_entries`;
+const TOGGL_API_BASE_URL = 'https://www.toggl.com/api/v8';
 
-const { TOGGL_WORKSPACE_ID_FROM } = process.env;
+const { TOGGL_THESIS_PROJECT_ID_FROM } = process.env;
 
-if (!TOGGL_WORKSPACE_ID_FROM) {
-  throw new Error(`Missing environment variable TOGGL_WORKSPACE_ID_FROM`);
+if (!TOGGL_THESIS_PROJECT_ID_FROM) {
+  throw new Error(`Missing environment variable TOGGL_THESIS_PROJECT_ID_FROM`);
 }
 
 const setupAxios = (baseUrl: string): void => {
@@ -33,20 +32,27 @@ const setupAxios = (baseUrl: string): void => {
   axios.defaults.baseURL = baseUrl;
 };
 
+const getDescription = (e: TogglTimeEntryBody): string => {
+  if (e.pid && String(e.pid) === TOGGL_THESIS_PROJECT_ID_FROM) {
+    return e.description;
+  }
+  return 'Work at the office';
+};
+
 const getTogglEntries = async (parameters: {
   startDate: Date;
   endDate: Date;
 }): Promise<ITogglEntry[]> => {
-  setupAxios(TOGGL_API_BASE_URL_ENTRIES);
+  setupAxios(TOGGL_API_BASE_URL);
 
   const req: TogglGetTimeEntriesBody = {
-    start_date: parameters.startDate.toISOString(),
-    end_date: parameters.endDate.toISOString(),
+    start_date: encodeURIComponent(parameters.startDate.toISOString()),
+    end_date: encodeURIComponent(parameters.endDate.toISOString()),
   };
 
   const qs = generateApiQueryString(req);
-  const { data } = await axios.get<TogglApiResponse<TogglTimeEntryBody[]>>(
-    `?${qs}`,
+  const { data } = await axios.get<TogglApiPlainResponse<TogglTimeEntryBody[]>>(
+    `/time_entries?${qs}`,
   );
 
   if (isTogglApiError(data)) {
@@ -55,11 +61,13 @@ const getTogglEntries = async (parameters: {
     throw new Error('Toggl API Error');
   }
 
-  return data.data.map(d => ({
+  return data.map(d => ({
     id: String(d.id),
+    isThesisEntry: !!(d.pid && String(d.pid) === TOGGL_THESIS_PROJECT_ID_FROM),
+    description: getDescription(d),
     secondsLogged: d.duration,
     running: d.duration < 0,
-    status: 'updated',
+    status: 'created',
     updateDateTime: d.at,
   }));
 };

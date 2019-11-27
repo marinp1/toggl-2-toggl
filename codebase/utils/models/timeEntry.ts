@@ -25,14 +25,20 @@ export class TimeEntry implements IDynamoTimeEntry {
   @GSIPartitionKey(TIME_ENTRY_INDEX.SYNCED)
   public readonly synced: boolean;
 
+  @GSIPartitionKey(TIME_ENTRY_INDEX.IS_THESIS)
+  public readonly isThesisEntry: boolean;
+
   @GSISortKey(TIME_ENTRY_INDEX.UPDATE_DATE_TIME)
   public readonly updateDateTime: string;
 
   @GSISortKey(TIME_ENTRY_INDEX.CREATION_DATE_TIME)
   public readonly creationDateTime: string;
 
-  public readonly entryIdTo: string;
-  public readonly resolvedEntryName: string;
+  public readonly description: string;
+
+  public readonly entryIdTo?: string;
+
+  public readonly resolvedEntryName?: string;
 }
 
 export const mapDbToTimeEntry = (
@@ -42,7 +48,9 @@ export const mapDbToTimeEntry = (
   secondsLogged: dbTimeEntry.secondsLogged,
   status: dbTimeEntry.status as typeof ENTRY_STATUSES[number],
   synced: dbTimeEntry.synced,
+  description: dbTimeEntry.description,
   creationDateTime: new Date(dbTimeEntry.creationDateTime),
+  isThesisEntry: dbTimeEntry.isThesisEntry,
   updateDateTime: new Date(dbTimeEntry.updateDateTime),
   createdEntry: dbTimeEntry.entryIdTo
     ? {
