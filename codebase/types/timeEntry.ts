@@ -37,4 +37,6 @@ export interface ITogglEntry {
   running: boolean;
   status: typeof ENTRY_STATUSES[number];
   updateDateTime: string;
+  startDateTime: string;
+  stopDateTime?: string;
 }
