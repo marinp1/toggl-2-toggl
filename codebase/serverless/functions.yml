@@ -1,0 +1,57 @@
+--- # ----------- Public lambda functions -------------
+
+getApiVersion:
+  handler: src/handler.getApiVersion
+  timeout: 20
+  events:
+    - http:
+        path: api-version
+        method: get
+        private: true
+
+# ----------- Authenticated lambda functions -------
+
+getTimeEntries:
+  handler: src/handler.getTimeEntries
+  timeout: 20
+  events:
+    - http:
+        path: entries
+        method: get
+        private: true
+
+getTimeEntry:
+  handler: src/handler.getTimeEntry
+  timeout: 20
+  events:
+    - http:
+        path: entries/by-id/{entryId}
+        method: get
+        private: true
+
+getUnsyncedTimeEntries:
+  handler: src/handler.getUnsyncedTimeEntries
+  timeout: 20
+  events:
+    - http:
+        path: entries/by-sync-status/unsynced
+        method: get
+        private: true
+
+getStatus:
+  handler: src/handler.getTimeEntriesWithStatus
+  timeout: 20
+  events:
+    - http:
+        path: entries/by-status/{status}
+        method: get
+        private: true
+
+getTogglEntries:
+  handler: src/handler.getTogglEntries
+  timeout: 20
+  events:
+    - http:
+        path: toggl/latest/{days}
+        method: get
+        private: true

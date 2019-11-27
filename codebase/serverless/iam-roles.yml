@@ -1,0 +1,23 @@
+- Effect: "Allow"
+  Action:
+    - "dynamodb:GetItem"
+    - "dynamodb:BatchGetItem"
+    - "dynamodb:Query"
+    - "dynamodb:Scan"
+    - "dynamodb:PutItem"
+    - "dynamodb:UpdateItem"
+    - "dynamodb:DeleteItem"
+  Resource:
+    - Fn::Join:
+        - ""
+        - - "arn:aws:dynamodb:${self:provider.region}:"
+          - Ref: "AWS::AccountId"
+          - ":table/"
+          - Ref: TimeEntriesTable
+    - Fn::Join:
+        - ""
+        - - "arn:aws:dynamodb:${self:provider.region}:"
+          - Ref: "AWS::AccountId"
+          - ":table/"
+          - Ref: TimeEntriesTable
+          - "/index/*"

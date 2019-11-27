@@ -1,0 +1,2 @@
+Resources:
+  TimeEntriesTable: ${file(./serverless/resources/dynamo/entries.yml)}

@@ -1,0 +1,72 @@
+service: toggl-task-sync
+#app: your-app-name
+#tenant: your-tenant-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+
+  stage: ${opt:stage}
+  region: ${file(./serverless/variables/${self:provider.stage}.yml):region}
+
+  apiKeys:
+    - ${self:service}-${self:provider.stage}-apiKey
+
+  iamRoleStatements: ${file(./serverless/iam-roles.yml)}
+
+  environment:
+    API_VERSION: ${file(./package.json):version}
+    APP_NAME: ${self:service}
+    APP_STAGE: ${self:provider.stage}
+    TELEGRAM_API_TOKEN: ${file(./.env.yml):TELEGRAM.API_TOKEN}
+    TOGGL_API_TOKEN_FROM: ${file(./.env.yml):TOGGL.FROM.API_TOKEN}
+    TOGGL_WORKSPACE_ID_FROM: ${file(./.env.yml):TOGGL.FROM.WORKSPACE_ID}
+    TOGGL_API_TOKEN_TO: ${file(./.env.yml):TOGGL.TO.API_TOKEN}
+    TOGGL_WORKSPACE_ID_TO: ${file(./.env.yml):TOGGL.TO.WORKSPACE_ID}
+
+  stackTags:
+    CostCentre: patrikmarin-apps
+    Environment: ${self:provider.stage}
+  tags:
+    CostCentre: patrikmarin-apps
+    Environment: ${self:provider.stage}
+
+functions:
+  - ${file(./serverless/functions.yml)}
+
+resources:
+  - ${file(./serverless/resources/combined.yml)}
+
+custom:
+  timeEntriesTableName: ${self:service}-${self:provider.stage}-TimeEntries
+  serverless-offline:
+    region: eu-central-1
+    port: "3000"
+    noAuth: true
+  dynamodb:
+    stages:
+      - offline
+    start:
+      host: localhost
+      port: "8000"
+      migrate: true
+      dbPath: dynamodb/
+      sharedDb: true
+      seed: true
+      inMemory: true
+      convertEmptyValues: true
+      noStart: true
+    seed:
+      test:
+        sources:
+          - table: ${self:custom.timeEntriesTableName}
+            sources: [./test/tasks.json]
+
+plugins:
+  - serverless-webpack
+  - serverless-dynamodb-local
+  - serverless-offline

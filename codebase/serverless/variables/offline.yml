@@ -1,0 +1,4 @@
+region: eu-central-1
+
+readCapacityUnits: 1
+writeCapacityUnits: 1

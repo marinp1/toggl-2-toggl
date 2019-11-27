@@ -1,0 +1,66 @@
+Type: "AWS::DynamoDB::Table"
+Properties:
+  AttributeDefinitions:
+    - AttributeName: entryIdFrom
+      AttributeType: S
+    - AttributeName: secondsLogged
+      AttributeType: N
+    - AttributeName: status
+      AttributeType: S
+    - AttributeName: synced
+      AttributeType: B
+    - AttributeName: creationDateTime
+      AttributeType: S
+    - AttributeName: updateDateTime
+      AttributeType: S
+  GlobalSecondaryIndexes:
+    - IndexName: secondsLogged-index
+      KeySchema:
+        - AttributeName: entryIdFrom
+          KeyType: HASH
+        - AttributeName: secondsLogged
+          KeyType: RANGE
+      Projection:
+        ProjectionType: ALL
+      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
+    - IndexName: synced-index
+      KeySchema:
+        - AttributeName: synced
+          KeyType: HASH
+      Projection:
+        ProjectionType: ALL
+      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
+    - IndexName: status-index
+      KeySchema:
+        - AttributeName: status
+          KeyType: HASH
+      Projection:
+        ProjectionType: ALL
+      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
+    - IndexName: creationDateTime-index
+      KeySchema:
+        - AttributeName: entryIdFrom
+          KeyType: HASH
+        - AttributeName: creationDateTime
+          KeyType: RANGE
+      Projection:
+        ProjectionType: ALL
+      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
+    - IndexName: updateDateTime-index
+      KeySchema:
+        - AttributeName: entryIdFrom
+          KeyType: HASH
+        - AttributeName: updateDateTime
+          KeyType: RANGE
+      Projection:
+        ProjectionType: ALL
+      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
+  KeySchema:
+    - AttributeName: entryIdFrom
+      KeyType: HASH
+  ProvisionedThroughput:
+    ReadCapacityUnits: ${file(./serverless/variables/${self:provider.stage}.yml):readCapacityUnits}
+    WriteCapacityUnits: ${file(./serverless/variables/${self:provider.stage}.yml):writeCapacityUnits}
+  TableName: ${self:custom.timeEntriesTableName}
+  SSESpecification:
+    SSEEnabled: true
