@@ -68,6 +68,7 @@ syncEntries:
             querystrings:
               dryrun: false
         private: true
+    - schedule: rate(2 hours)
 
 syncDatabaseToToggl:
   handler: src/handler.syncDatabaseEntriesToToggl
@@ -77,3 +78,4 @@ syncDatabaseToToggl:
         path: entries/syncronise
         method: post
         private: true
+    - schedule: cron(0 2,16 * * ? *)
