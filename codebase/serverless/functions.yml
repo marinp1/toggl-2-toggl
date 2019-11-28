@@ -61,10 +61,19 @@ syncEntries:
   timeout: 20
   events:
     - http:
-        path: syncronise
+        path: toggl/syncronise
         method: post
         request:
           parameters:
             querystrings:
               dryrun: false
+        private: true
+
+syncDatabaseToToggl:
+  handler: src/handler.syncDatabaseEntriesToToggl
+  timeout: 20
+  events:
+    - http:
+        path: entries/syncronise
+        method: post
         private: true

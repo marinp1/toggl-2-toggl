@@ -25,6 +25,16 @@ interface TogglTimeEntryOptionalBody {
 export type TogglTimeEntryBody = TogglTimeEntryRequiredBody &
   TogglTimeEntryOptionalBody;
 
+export type TogglTimeEntryBodyRequest = {
+  time_entry: Required<
+    Pick<
+      TogglTimeEntryBody,
+      'description' | 'pid' | 'start' | 'stop' | 'duration' | 'created_with'
+    >
+  > &
+    Pick<TogglTimeEntryBody, 'tags'>;
+};
+
 export interface TogglApiSuccess<T> {
   total_grand: null | number;
   total_billable: null | number;

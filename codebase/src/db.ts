@@ -42,7 +42,7 @@ const getUnsyncedTimeEntries = async (): Promise<ITimeEntry[]> => {
     const entries = await timeEntryStore
       .query()
       .index(TIME_ENTRY_INDEX.SYNCED)
-      .wherePartitionKey(false)
+      .wherePartitionKey(0)
       .exec();
     return entries.map(DB.mapDbToTimeEntry);
   } catch (e) {

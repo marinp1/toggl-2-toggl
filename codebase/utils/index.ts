@@ -60,6 +60,13 @@ const sendNotFoundResponse = (message: string): IResponse<IError> =>
 const sendForbiddenResponse = (message: string): IResponse<IError> =>
   sendFailureResponse(403, message);
 
+const sendEmptySuccessResponse = (message: string): IResponse<string> => {
+  return Promise.resolve({
+    statusCode: 204,
+    body: message,
+  });
+};
+
 const sendSuccessResponse = <T>(body: T): IResponse<T> => {
   return Promise.resolve({
     statusCode: 200,
@@ -71,6 +78,7 @@ export const LambdaUtils = {
   sendErrorResponse,
   sendForbiddenResponse,
   sendNotFoundResponse,
+  sendEmptySuccessResponse,
   sendSuccessResponse,
 };
 

@@ -262,3 +262,73 @@ export const syncLatestEntriesToDatabase = async (
     return LambdaUtils.sendErrorResponse('Internal server error');
   }
 };
+
+interface SyncResultMessage {
+  total: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  message: string;
+}
+
+export const syncDatabaseEntriesToToggl = async (
+  event: ILambdaEvent<{}>,
+): IResponse<SyncResultMessage | string> => {
+  // eslint-disable-next-line no-console
+  console.log(event);
+  try {
+    const unsynced = await db.timeEntry.getUnsynced();
+    if (unsynced.length === 0) {
+      return LambdaUtils.sendEmptySuccessResponse('Nothing to sync');
+    }
+
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    let synced = 0;
+
+    for (let i = 0; i < unsynced.length; i++) {
+      const elem = unsynced[i];
+
+      let togglEntry: ITogglEntry | null = null;
+
+      if (elem.status === 'created') {
+        togglEntry = await API.Toggl.createTogglEntry(elem);
+        created += 1;
+      } else if (elem.status === 'updated') {
+        togglEntry = await API.Toggl.updateTogglEntry(elem);
+        updated += 1;
+      }
+
+      if (!togglEntry) {
+        console.log(`Skipped entry ${JSON.stringify(elem, null, 2)}`);
+        skipped += 1;
+      } else {
+        await db.timeEntry.link(
+          elem.entryIdFrom,
+          togglEntry.id,
+          togglEntry.description,
+        );
+        synced += 1;
+        console.log(`Linked entry`, elem.entryIdFrom, 'to', togglEntry.id);
+      }
+    }
+
+    if (synced !== created + updated) {
+      throw new Error('Sync count did not match update count, check data!');
+    }
+
+    return LambdaUtils.sendSuccessResponse<SyncResultMessage>({
+      total: created + updated + skipped,
+      created,
+      updated,
+      skipped,
+      message: `Sync successful!`,
+    });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    return LambdaUtils.sendErrorResponse('Internal server error');
+  }
+};
