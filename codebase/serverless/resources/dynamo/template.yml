@@ -1,3 +1,0 @@
-MinProvisionedThroughput:
-  ReadCapacityUnits: ${file(./serverless/variables/${self:provider.stage}.yml):readCapacityUnits}
-  WriteCapacityUnits: ${file(./serverless/variables/${self:provider.stage}.yml):writeCapacityUnits}

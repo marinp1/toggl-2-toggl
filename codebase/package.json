@@ -1,5 +1,5 @@
 {
-  "name": "toggl-task-sync",
+  "name": "toggl-2-toggl",
   "version": "0.1.0",
   "description": "Sync Toggl tasks to another Toggl account",
   "main": "index.js",

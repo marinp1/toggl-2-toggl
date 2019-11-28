@@ -24,28 +24,24 @@ Properties:
           KeyType: RANGE
       Projection:
         ProjectionType: ALL
-      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
     - IndexName: synced-index
       KeySchema:
         - AttributeName: synced
           KeyType: HASH
       Projection:
         ProjectionType: ALL
-      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
     - IndexName: isThesisEntry-index
       KeySchema:
         - AttributeName: isThesisEntry
           KeyType: HASH
       Projection:
         ProjectionType: ALL
-      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
     - IndexName: status-index
       KeySchema:
         - AttributeName: status
           KeyType: HASH
       Projection:
         ProjectionType: ALL
-      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
     - IndexName: creationDateTime-index
       KeySchema:
         - AttributeName: entryIdFrom
@@ -54,7 +50,6 @@ Properties:
           KeyType: RANGE
       Projection:
         ProjectionType: ALL
-      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
     - IndexName: updateDateTime-index
       KeySchema:
         - AttributeName: entryIdFrom
@@ -63,13 +58,10 @@ Properties:
           KeyType: RANGE
       Projection:
         ProjectionType: ALL
-      ProvisionedThroughput: ${file(./serverless/resources/dynamo/template.yml):MinProvisionedThroughput}
   KeySchema:
     - AttributeName: entryIdFrom
       KeyType: HASH
-  ProvisionedThroughput:
-    ReadCapacityUnits: ${file(./serverless/variables/${self:provider.stage}.yml):readCapacityUnits}
-    WriteCapacityUnits: ${file(./serverless/variables/${self:provider.stage}.yml):writeCapacityUnits}
+  BillingMode: PAY_PER_REQUEST
   TableName: ${self:custom.timeEntriesTableName}
   SSESpecification:
     SSEEnabled: true
