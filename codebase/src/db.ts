@@ -24,6 +24,18 @@ const getTimeEntry = async (id: string): Promise<ITimeEntry | null> => {
   }
 };
 
+const getTimeEntries = async (ids: string[]): Promise<ITimeEntry[]> => {
+  try {
+    const timeEntryStore = new DynamoStore(DB.TimeEntry, DynamoDB.raw);
+    const entries = await timeEntryStore
+      .batchGet(ids.map(id => ({ entryIdFrom: id })))
+      .exec();
+    return entries.map(DB.mapDbToTimeEntry);
+  } catch (e) {
+    throw new DatabaseError('TimeEntries', 'getTimeEntries', e);
+  }
+};
+
 const getUnsyncedTimeEntries = async (): Promise<ITimeEntry[]> => {
   try {
     const timeEntryStore = new DynamoStore(DB.TimeEntry, DynamoDB.raw);
@@ -58,6 +70,7 @@ export default {
   timeEntry: {
     getAll: getAllTimeEntries,
     get: getTimeEntry,
+    getBatch: getTimeEntries,
     getUnsynced: getUnsyncedTimeEntries,
     getWithStatus: getTimeEntriesWithStatus,
   },

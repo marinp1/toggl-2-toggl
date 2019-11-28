@@ -24,9 +24,10 @@ provider:
     APP_STAGE: ${self:provider.stage}
     TELEGRAM_API_TOKEN: ${file(./.env.yml):TELEGRAM.API_TOKEN}
     TOGGL_API_TOKEN_FROM: ${file(./.env.yml):TOGGL.FROM.API_TOKEN}
-    TOGGL_THESIS_PROJECT_ID_FROM: ${file(./.env.yml):TOGGL.FROM.THESIS_PROJECT_ID_FROM}
+    TOGGL_THESIS_PROJECT_ID_FROM: ${file(./.env.yml):TOGGL.FROM.THESIS_PROJECT_ID}
     TOGGL_API_TOKEN_TO: ${file(./.env.yml):TOGGL.TO.API_TOKEN}
     TOGGL_WORKSPACE_ID_TO: ${file(./.env.yml):TOGGL.TO.WORKSPACE_ID}
+    TOGGL_THESIS_PROJECT_ID_TO: ${file(./.env.yml):TOGGL.TO.THESIS_PROJECT_ID}
 
   stackTags:
     CostCentre: patrikmarin-apps

@@ -55,3 +55,16 @@ getTogglEntries:
         path: toggl/latest/{days}
         method: get
         private: true
+
+syncEntries:
+  handler: src/handler.syncLatestEntriesToDatabase
+  timeout: 20
+  events:
+    - http:
+        path: syncronise
+        method: post
+        request:
+          parameters:
+            querystrings:
+              dryrun: false
+        private: true

@@ -10,8 +10,11 @@ export interface ILambdaResponse<T> {
 
 export type IResponse<T> = Promise<ILambdaResponse<T>>;
 
+type QueryString = 'dryrun';
+
 export interface ILambdaEvent<T> {
   pathParameters: { [param: string]: string };
+  queryStringParameters: null | Partial<Record<QueryString, string>>;
   body: Stringified<T>;
   isOffline?: boolean;
 }

@@ -10,14 +10,20 @@ import {
   TogglApiPlainResponse,
   ITogglEntry,
 } from '@types';
+
 import db from 'src/db';
 
 const TOGGL_API_BASE_URL = 'https://www.toggl.com/api/v8';
 
-const { TOGGL_THESIS_PROJECT_ID_FROM } = process.env;
+const {
+  TOGGL_THESIS_PROJECT_ID_FROM,
+  TOGGL_THESIS_PROJECT_ID_TO,
+} = process.env;
 
 if (!TOGGL_THESIS_PROJECT_ID_FROM) {
   throw new Error(`Missing environment variable TOGGL_THESIS_PROJECT_ID_FROM`);
+} else if (!TOGGL_THESIS_PROJECT_ID_TO) {
+  throw new Error(`Missing environment variable TOGGL_THESIS_PROJECT_ID_TO`);
 }
 
 const setupAxios = (baseUrl: string): void => {
@@ -39,38 +45,6 @@ const getDescription = (e: TogglTimeEntryBody): string => {
     return e.description;
   }
   return 'Work at the office';
-};
-
-const combineEntries = (e1: ITogglEntry, e2: ITogglEntry): ITogglEntry[] => {
-  if (
-    !e1.stopDateTime ||
-    !e2.stopDateTime ||
-    e1.isThesisEntry ||
-    e2.isThesisEntry
-  ) {
-    return [e1, e2];
-  }
-
-  const timeDifference = Math.abs(
-    Date.parse(e1.stopDateTime) - Date.parse(e2.startDateTime),
-  );
-  if (timeDifference > 60 * 1000) {
-    return [e1, e2];
-  }
-
-  return [
-    {
-      id: `${e1.id}-${e2.id}`,
-      isThesisEntry: false,
-      description: e1.description,
-      secondsLogged: e1.secondsLogged + e2.secondsLogged,
-      running: false,
-      status: 'created',
-      startDateTime: String(e1.startDateTime),
-      stopDateTime: e2.stopDateTime,
-      updateDateTime: new Date().toISOString(),
-    },
-  ];
 };
 
 const getTogglEntries = async (parameters: {
@@ -112,22 +86,7 @@ const getTogglEntries = async (parameters: {
     e => e.startDateTime,
   );
 
-  const reduced = sorted
-    .filter(d => !d.running)
-    .reduce<ITogglEntry[]>((prev, cur) => {
-      const last = _.last(prev);
-      if (!last) {
-        return prev.concat(cur);
-      } else {
-        const combined = combineEntries(last, cur);
-        if (combined.length === 2) {
-          return prev.concat(cur);
-        }
-        return _.dropRight(prev, 1).concat(combined);
-      }
-    }, []);
-
-  return reduced;
+  return sorted;
 };
 
 export default {

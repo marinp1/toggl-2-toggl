@@ -142,20 +142,93 @@ export const getTogglEntries = async (
   console.log(event);
   try {
     const { days } = event.pathParameters;
-    if (!days || !Number(days) || Number(days) < 1 || Number(days) > 7) {
+    if (
+      days === undefined ||
+      Number(days) === undefined ||
+      Number(days) < 0 ||
+      Number(days) > 7
+    ) {
       return LambdaUtils.sendSuccessResponse({
         code: -200,
         message: `Missing or invalid path parameter days`,
       });
     }
     const now = Date.now();
-    const startDate = new Date(now - hoursToMilliseconds(Number(days)));
+    const startDate = new Date(
+      new Date(now - hoursToMilliseconds(Number(days))).setHours(0, 0, 0),
+    );
     const endDate = new Date(new Date().setHours(23, 59, 59));
     const entries = await API.Toggl.getTogglEntries({
       startDate,
       endDate,
     });
     return LambdaUtils.sendSuccessResponse<ITogglEntry[]>(entries);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    return LambdaUtils.sendErrorResponse('Internal server error');
+  }
+};
+
+type SyncResponse = Record<typeof ENTRY_STATUSES[number], number> & {
+  total: number;
+  existing: number;
+  dryrun: boolean;
+};
+
+export const syncLatestEntriesToDatabase = async (
+  event: ILambdaEvent<{}>,
+): IResponse<SyncResponse> => {
+  // eslint-disable-next-line no-console
+  console.log(event);
+  try {
+    const dryrun =
+      event.queryStringParameters &&
+      (event.queryStringParameters.dryrun === 'true' ||
+        event.queryStringParameters.dryrun === '1');
+
+    const now = Date.now();
+    const startDate = new Date(
+      new Date(now - hoursToMilliseconds(2)).setHours(0, 0, 0),
+    );
+    const endDate = new Date(new Date().setHours(23, 59, 59));
+    const entries = await API.Toggl.getTogglEntries({
+      startDate,
+      endDate,
+    });
+    const dbEntries = await db.timeEntry.getBatch(entries.map(e => e.id));
+    const dbEntryIds = dbEntries.map(e => e.entryIdFrom);
+
+    const created = entries.filter(e => !dbEntryIds.includes(e.id));
+    const updated = _.intersectionWith<ITogglEntry, ITimeEntry>(
+      entries,
+      dbEntries,
+      (a, b) => {
+        return (
+          a.id === b.entryIdFrom &&
+          (a.secondsLogged !== b.secondsLogged ||
+            a.isThesisEntry !== b.isThesisEntry)
+        );
+      },
+    );
+
+    const usedIds = [...updated, ...created].map(e => e.id);
+    const existing = entries.filter(e => !usedIds.includes(e.id));
+
+    const response: SyncResponse = {
+      total: entries.length,
+      created: created.length,
+      updated: updated.length,
+      existing: existing.length,
+      deleted: -1,
+      dryrun: !!dryrun,
+    };
+
+    if (!dryrun) {
+      // TODO:
+    }
+
+    return LambdaUtils.sendSuccessResponse<SyncResponse>(response);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error(e);
