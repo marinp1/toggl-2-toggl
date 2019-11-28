@@ -2,11 +2,13 @@ export interface IDynamoTimeEntry {
   entryIdFrom: string;
   secondsLogged: number;
   status: string;
-  synced: boolean;
+  synced: number;
   creationDateTime: string;
   updateDateTime: string;
-  isThesisEntry: boolean;
+  isThesisEntry: number;
   description: string;
+  startDateTime: string;
+  stopDateTime: string;
   entryIdTo?: string;
   resolvedEntryName?: string;
 }
@@ -21,6 +23,8 @@ export interface ITimeEntry {
   synced: boolean;
   creationDateTime: Date;
   updateDateTime: Date;
+  startDateTime: Date;
+  endDateTime: Date;
   isThesisEntry: boolean;
   description: string;
   createdEntry: {

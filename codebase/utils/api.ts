@@ -1,5 +1,10 @@
 import * as _ from 'lodash';
-import { TogglApiError, ITogglEntry } from '@types';
+import {
+  TogglApiError,
+  ITogglEntry,
+  IDynamoTimeEntry,
+  ENTRY_STATUSES,
+} from '@types';
 
 export const generateApiQueryString = (req: object): string =>
   Object.entries(req)
@@ -59,3 +64,20 @@ export const reduceEntries = (entries: ITogglEntry[]) => {
       }
     }, []);
 };
+
+export const togglEntryToDynamoEntry = (
+  entry: ITogglEntry,
+  status: typeof ENTRY_STATUSES[number],
+  creationDateTime: string,
+): IDynamoTimeEntry => ({
+  entryIdFrom: entry.id,
+  description: entry.description,
+  secondsLogged: entry.secondsLogged,
+  status: String(status),
+  synced: 0,
+  creationDateTime: creationDateTime,
+  updateDateTime: entry.updateDateTime,
+  isThesisEntry: entry.isThesisEntry === true ? 1 : 0,
+  startDateTime: entry.startDateTime,
+  stopDateTime: String(entry.stopDateTime),
+});

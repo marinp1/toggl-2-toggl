@@ -8,9 +8,9 @@ Properties:
     - AttributeName: status
       AttributeType: S
     - AttributeName: synced
-      AttributeType: B
+      AttributeType: N
     - AttributeName: isThesisEntry
-      AttributeType: B
+      AttributeType: N
     - AttributeName: creationDateTime
       AttributeType: S
     - AttributeName: updateDateTime

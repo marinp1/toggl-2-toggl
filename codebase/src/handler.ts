@@ -174,6 +174,11 @@ type SyncResponse = Record<typeof ENTRY_STATUSES[number], number> & {
   total: number;
   existing: number;
   dryrun: boolean;
+  dynamo?: {
+    created: number;
+    updated: number;
+    deleted: number;
+  };
 };
 
 export const syncLatestEntriesToDatabase = async (
@@ -189,7 +194,7 @@ export const syncLatestEntriesToDatabase = async (
 
     const now = Date.now();
     const startDate = new Date(
-      new Date(now - hoursToMilliseconds(2)).setHours(0, 0, 0),
+      new Date(now - hoursToMilliseconds(1)).setHours(0, 0, 0),
     );
     const endDate = new Date(new Date().setHours(23, 59, 59));
     const entries = await API.Toggl.getTogglEntries({
@@ -225,7 +230,29 @@ export const syncLatestEntriesToDatabase = async (
     };
 
     if (!dryrun) {
-      // TODO:
+      if (created.length + updated.length === 0) {
+        response.dynamo = {
+          created: 0,
+          updated: 0,
+          deleted: -1,
+        };
+      } else {
+        const createPromises = created.map(async e => {
+          return db.timeEntry.create(e);
+        });
+        const updatePromises = updated.map(async e => {
+          return db.timeEntry.update(e);
+        });
+
+        const createdEntries = await Promise.all(createPromises);
+        const updatedEntries = await Promise.all(updatePromises);
+
+        response.dynamo = {
+          created: createdEntries.length,
+          updated: updatedEntries.length,
+          deleted: -1,
+        };
+      }
     }
 
     return LambdaUtils.sendSuccessResponse<SyncResponse>(response);

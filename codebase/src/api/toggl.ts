@@ -11,8 +11,6 @@ import {
   ITogglEntry,
 } from '@types';
 
-import db from 'src/db';
-
 const TOGGL_API_BASE_URL = 'https://www.toggl.com/api/v8';
 
 const {

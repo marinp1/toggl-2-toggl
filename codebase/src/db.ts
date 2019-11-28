@@ -1,8 +1,8 @@
 import { DynamoStore } from '@shiftcoders/dynamo-easy';
 
 import { TIME_ENTRY_INDEX } from '@utils/indices';
-import { ITimeEntry, ENTRY_STATUSES } from '@types';
-import { DatabaseError, DynamoDB, DB } from '@utils';
+import { ITimeEntry, ENTRY_STATUSES, ITogglEntry } from '@types';
+import { DatabaseError, DynamoDB, DB, togglEntryToDynamoEntry } from '@utils';
 
 const getAllTimeEntries = async (): Promise<ITimeEntry[]> => {
   try {
@@ -66,6 +66,87 @@ const getTimeEntriesWithStatus = async (
   }
 };
 
+const createNewTimeEntry = async (entry: ITogglEntry): Promise<ITimeEntry> => {
+  try {
+    const dbEntry = togglEntryToDynamoEntry(
+      entry,
+      'created',
+      new Date().toISOString(),
+    );
+
+    const timeEntryStore = new DynamoStore(DB.TimeEntry, DynamoDB.raw);
+    await timeEntryStore.put(dbEntry).exec();
+    return DB.mapDbToTimeEntry(dbEntry);
+  } catch (e) {
+    throw new DatabaseError('TimeEntries', 'createNewTimeEntry', e);
+  }
+};
+
+const updateTimeEntry = async (entry: ITogglEntry): Promise<ITimeEntry> => {
+  try {
+    const dbEntry = togglEntryToDynamoEntry(
+      entry,
+      'created',
+      new Date().toISOString(),
+    );
+    const timeEntryStore = new DynamoStore(DB.TimeEntry, DynamoDB.raw);
+    await timeEntryStore
+      .update(dbEntry.entryIdFrom)
+      .updateAttribute('isThesisEntry')
+      .set(dbEntry.isThesisEntry)
+      .updateAttribute('secondsLogged')
+      .set(dbEntry.secondsLogged)
+      .updateAttribute('startDateTime')
+      .set(dbEntry.startDateTime)
+      .updateAttribute('stopDateTime')
+      .set(dbEntry.stopDateTime)
+      .updateAttribute('updateDateTime')
+      .set(dbEntry.updateDateTime)
+      .updateAttribute('status')
+      .set(ENTRY_STATUSES[2])
+      .updateAttribute('synced')
+      .set(0)
+      .exec();
+    return DB.mapDbToTimeEntry(dbEntry);
+  } catch (e) {
+    throw new DatabaseError('TimeEntries', 'createNewTimeEntry', e);
+  }
+};
+
+const linkToSynced = async (
+  entryIdFrom: string,
+  entryIdTo: string,
+  description: string,
+): Promise<ITimeEntry> => {
+  try {
+    const entryBefore = await getTimeEntry(entryIdFrom);
+    if (!entryBefore) {
+      throw new Error('Failed to sync!');
+    }
+
+    const timeEntryStore = new DynamoStore(DB.TimeEntry, DynamoDB.raw);
+    await timeEntryStore
+      .update(entryIdFrom)
+      .updateAttribute('entryIdTo')
+      .set(entryIdTo)
+      .updateAttribute('resolvedEntryName')
+      .set(description)
+      .updateAttribute('status')
+      .set(ENTRY_STATUSES[0])
+      .updateAttribute('synced')
+      .set(1)
+      .exec();
+
+    const entryAfter = await getTimeEntry(entryIdFrom);
+    if (!entryAfter) {
+      throw new Error('This error should not happen!');
+    }
+    return entryAfter;
+  } catch (e) {
+    throw new DatabaseError('TimeEntries', 'createNewTimeEntry', e);
+  }
+};
+
 export default {
   timeEntry: {
     getAll: getAllTimeEntries,
@@ -73,5 +154,8 @@ export default {
     getBatch: getTimeEntries,
     getUnsynced: getUnsyncedTimeEntries,
     getWithStatus: getTimeEntriesWithStatus,
+    create: createNewTimeEntry,
+    update: updateTimeEntry,
+    link: linkToSynced,
   },
 };
