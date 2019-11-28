@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import * as _ from 'lodash';
 import {
   IResponse,
@@ -288,7 +289,7 @@ export const syncDatabaseEntriesToToggl = async (
 
     let synced = 0;
 
-    for (let i = 0; i < unsynced.length; i++) {
+    for (let i = 0; i < unsynced.length; i += 1) {
       const elem = unsynced[i];
 
       let togglEntry: ITogglEntry | null = null;
@@ -302,6 +303,7 @@ export const syncDatabaseEntriesToToggl = async (
       }
 
       if (!togglEntry) {
+        // eslint-disable-next-line no-console
         console.log(`Skipped entry ${JSON.stringify(elem, null, 2)}`);
         skipped += 1;
       } else {
@@ -311,6 +313,7 @@ export const syncDatabaseEntriesToToggl = async (
           togglEntry.description,
         );
         synced += 1;
+        // eslint-disable-next-line no-console
         console.log(`Linked entry`, elem.entryIdFrom, 'to', togglEntry.id);
       }
     }

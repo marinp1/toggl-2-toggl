@@ -48,20 +48,19 @@ const combineEntries = (e1: ITogglEntry, e2: ITogglEntry): ITogglEntry[] => {
   ];
 };
 
-export const reduceEntries = (entries: ITogglEntry[]) => {
+export const reduceEntries = (entries: ITogglEntry[]): ITogglEntry[] => {
   return _.sortBy(entries, e => e.startDateTime)
     .filter(d => !d.running)
     .reduce<ITogglEntry[]>((prev, cur) => {
       const last = _.last(prev);
       if (!last) {
         return prev.concat(cur);
-      } else {
-        const combined = combineEntries(last, cur);
-        if (combined.length === 2) {
-          return prev.concat(cur);
-        }
-        return _.dropRight(prev, 1).concat(combined);
       }
+      const combined = combineEntries(last, cur);
+      if (combined.length === 2) {
+        return prev.concat(cur);
+      }
+      return _.dropRight(prev, 1).concat(combined);
     }, []);
 };
 
@@ -75,7 +74,7 @@ export const togglEntryToDynamoEntry = (
   secondsLogged: entry.secondsLogged,
   status: String(status),
   synced: 0,
-  creationDateTime: creationDateTime,
+  creationDateTime,
   updateDateTime: entry.updateDateTime,
   isThesisEntry: entry.isThesisEntry === true ? 1 : 0,
   startDateTime: entry.startDateTime,

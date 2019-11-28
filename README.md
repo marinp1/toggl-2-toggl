@@ -1,2 +1,5 @@
-#toggl-task-sync
-Syncs Toggl tasks between two Toggl accounts
+# toggl-task-sync
+
+![AWS CodeBuild](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidEprQkNiaDdwQ2x2bWd3blk5K29IVDVQY1ZkaHppWGVFU1ZnZUg1UWZTRmUxMXNqSXNPS2dacXJRSGZuS0U4SVc5WWhZV3Q1QzJxTzcxb1p0R0lGSXhJPSIsIml2UGFyYW1ldGVyU3BlYyI6Ikd2ZFFGRUpwNHBrb1pSTWsiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+
+Sync Toggl tasks between two Toggl accounts

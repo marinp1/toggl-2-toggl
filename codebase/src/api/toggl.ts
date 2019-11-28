@@ -43,7 +43,7 @@ const setupAxios = (baseUrl: string, account: 'to' | 'from'): void => {
     account === 'from' ? TOGGL_API_TOKEN_FROM : TOGGL_API_TOKEN_TO;
 
   axios.defaults.auth = {
-    username: username,
+    username,
     password: 'api_token',
   };
 
@@ -96,7 +96,7 @@ const getTogglEntries = async (parameters: {
     e => e.startDateTime,
   );
 
-  return sorted;
+  return sorted.filter(e => e.running === false);
 };
 
 const createTogglEntry = async (entry: ITimeEntry): Promise<ITogglEntry> => {

@@ -1,1 +1,13 @@
-region: eu-central-1
+REGION: eu-central-1
+TOGGL:
+  # Account to sync tasks from
+  FROM:
+    API_TOKEN: ${ssm:T2T-DEV-TOGGL_API_TOKEN_FROM~true}
+    THESIS_PROJECT_ID: ${ssm:T2T-DEV-TOGGL_THESIS_PROJECT_ID_FROM~true}
+  # Account to sync tasks to
+  TO:
+    API_TOKEN: ${ssm:T2T-DEV-TOGGL_API_TOKEN_TO~true}
+    THESIS_PROJECT_ID: ${ssm:T2T-DEV-TOGGL_THESIS_PROJECT_ID_TO~true}
+    WORK_PROJECT_ID: ${ssm:T2T-DEV-TOGGL_WORK_PROJECT_ID_TO~true}
+TELEGRAM:
+  API_TOKEN: xxx

@@ -63,3 +63,5 @@ env.yml
 
 # next.js build output
 .next
+
+/codebase/target
