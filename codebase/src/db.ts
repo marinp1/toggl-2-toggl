@@ -90,6 +90,12 @@ const updateTimeEntry = async (entry: ITogglEntry): Promise<ITimeEntry> => {
       new Date().toISOString(),
     );
     const timeEntryStore = new DynamoStore(DB.TimeEntry, DynamoDB.raw);
+
+    const currentEntry = await timeEntryStore.get(dbEntry.entryIdFrom).exec();
+
+    const entryCreated = currentEntry && currentEntry.entryIdTo !== undefined;
+    const status = entryCreated ? ENTRY_STATUSES[2] : ENTRY_STATUSES[0];
+
     await timeEntryStore
       .update(dbEntry.entryIdFrom)
       .updateAttribute('isThesisEntry')
@@ -103,7 +109,7 @@ const updateTimeEntry = async (entry: ITogglEntry): Promise<ITimeEntry> => {
       .updateAttribute('updateDateTime')
       .set(dbEntry.updateDateTime)
       .updateAttribute('status')
-      .set(ENTRY_STATUSES[2])
+      .set(status)
       .updateAttribute('synced')
       .set(0)
       .exec();
