@@ -1,6 +1,6 @@
 service: toggl-2-toggl
-app: toggl-2-toggl
-org: marinp1
+#app: toggl-2-toggl
+#org: marinp1
 
 provider:
   name: aws

@@ -15,9 +15,6 @@ interface AppInformation {
   };
 }
 
-export const ping = async (event: LambdaEvent): LambdaResponse<string> =>
-  successResponse('pong');
-
 export const getMetrics = async (
   event: LambdaEvent,
 ): LambdaResponse<AppInformation> => {
