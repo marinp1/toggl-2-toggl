@@ -17,17 +17,29 @@ functions:
   ping:
     handler: src/handler/index.ping
     description: handler to check if service is available
+    memorySize: 64
     events:
       - http:
           path: ping
           method: GET
-          # private: true
+          private: true
+
+  metrics:
+    handler: src/handler/index.getMetrics
+    description: fetch current state and metrics
+    events:
+      - http:
+          path: metrics
+          method: GET
+          private: true
 
 custom:
   bundle:
-    #caching: true # Enable Webpack caching
+    caching: true # Enable Webpack caching
     linting: false
     sourcemaps: false
+  serverless-offline:
+    noAuth: true
 
 plugins:
   - serverless-bundle
