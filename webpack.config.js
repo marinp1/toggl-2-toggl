@@ -11,7 +11,7 @@ const commonNodeModulesPath = path.resolve(
 module.exports = {
   entry: slsw.lib.entries,
   target: 'node',
-  mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
+  mode: 'production',
   resolve: {
     alias: {},
     modules: ['node_modules', commonNodeModulesPath],
@@ -59,7 +59,8 @@ module.exports = {
   optimization: {
     sideEffects: true,
     usedExports: true,
-    minimize: true,
+    minimize: false,
+    innerGraph: true,
   },
   externals: [],
 };
