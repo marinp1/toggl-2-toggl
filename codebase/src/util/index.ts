@@ -1,8 +1,11 @@
 import { LambdaSuccessResponse } from "types";
-import formatDistance from "date-fns/formatDistance";
-import formatISO from "date-fns/formatISO";
 
-export const generateDateString = (date: Date | number) => {
+export const generateDateString = async (date: Date | number) => {
+  const [formatDistance, formatISO] = await Promise.all([
+    import("date-fns/formatDistance").then((mod) => mod.default),
+    import("date-fns/formatISO").then((mod) => mod.default),
+  ]);
+
   const readable = formatDistance(date, Date.now(), { addSuffix: true });
   return `${formatISO(date)} (${readable})`;
 };

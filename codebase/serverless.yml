@@ -5,17 +5,17 @@ org: marinp1
 provider:
   name: aws
   runtime: nodejs12.x
-  region: eu-north-1
+  region: eu-central-1
   memorySize: 128
   timeout: 5
   versionFunctions: false
 
 package:
-  individually: false
+  individually: true
 
 functions:
   ping:
-    handler: src/handler/index.ping
+    handler: src/handler/ping.ping
     description: handler to check if service is available
     memorySize: 64
     events:
@@ -25,7 +25,7 @@ functions:
           private: true
 
   metrics:
-    handler: src/handler/index.getMetrics
+    handler: src/handler/metrics.getMetrics
     description: fetch current state and metrics
     events:
       - http:
@@ -35,7 +35,7 @@ functions:
 
 custom:
   bundle:
-    caching: true # Enable Webpack caching
+    caching: false # Enable Webpack caching
     linting: false
     sourcemaps: false
   serverless-offline:
