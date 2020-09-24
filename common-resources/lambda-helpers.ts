@@ -1,4 +1,4 @@
-import { LambdaSuccessResponse } from '../types';
+import { LambdaSuccessResponse } from './types';
 
 export const successResponse = <T extends Record<string, any> | null | string>(
   body: T,

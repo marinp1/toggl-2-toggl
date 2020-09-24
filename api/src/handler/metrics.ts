@@ -1,6 +1,6 @@
-import { LambdaEvent, LambdaResponse } from '../../../types';
+import { LambdaEvent, LambdaResponse } from 'common-resources/types';
 
-import { generateDateString, successResponse } from '../../../common-resources';
+import { generateDateString, successResponse } from 'common-resources';
 
 interface AppInformation {
   metrics: {

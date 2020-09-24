@@ -1,6 +1,6 @@
-import { LambdaEvent, LambdaResponse } from '../../../types';
+import { LambdaEvent, LambdaResponse } from 'common-resources/types';
 
-import { successResponse } from '../../../common-resources';
+import { successResponse } from 'common-resources';
 
 export const ping = async (event: LambdaEvent): LambdaResponse<string> =>
   successResponse('pong');
