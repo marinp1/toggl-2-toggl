@@ -1,0 +1,23 @@
+{
+  "name": "toggl-2-toggl",
+  "version": "1.0.0",
+  "description": "Sync entries from one Toggl account to another",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marinp1/toggl-2-toggl.git"
+  },
+  "author": "Patrik Marin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marinp1/toggl-2-toggl/issues"
+  },
+  "homepage": "https://github.com/marinp1/toggl-2-toggl#readme",
+  "devDependencies": {
+    "serverless-bundle": "3.1.0",
+    "serverless-offline": "^6.8.0"
+  }
+}
