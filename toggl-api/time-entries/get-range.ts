@@ -31,7 +31,7 @@ export const getLatest: ApiMethod<TimeEntryResponse[], [number]> = (
     }
     const now = Date.now();
     return getBetween(apiCall)({
-      startDate: now - 86400 * numberOfDays,
+      startDate: now - 86400 * 1000 * numberOfDays,
       endDate: now,
     });
   } catch (e) {

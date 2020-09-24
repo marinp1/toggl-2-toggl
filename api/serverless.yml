@@ -38,7 +38,7 @@ functions:
     description: fetch latest entries from Toggl
     events:
       - http:
-          path: events/latest/{api_key}
+          path: events/latest/{api_token}
           method: GET
           private: true
           request:
