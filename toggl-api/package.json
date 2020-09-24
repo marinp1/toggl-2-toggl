@@ -1,0 +1,12 @@
+{
+  "name": "toggl-api",
+  "version": "1.0.0",
+  "sideEffects": false,
+  "description": "Module for Toggl REST API",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "common-resources": "1.0.0"
+  }
+}

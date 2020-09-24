@@ -5,7 +5,8 @@
   "main": "index.js",
   "workspaces": [
     "api",
-    "common-resources"
+    "common-resources",
+    "toggl-api"
   ],
   "repository": {
     "type": "git",

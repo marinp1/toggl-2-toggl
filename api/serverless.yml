@@ -33,6 +33,19 @@ functions:
           method: GET
           private: true
 
+  latest:
+    handler: src/handler/fetch-entries.fetchLatestEntries
+    description: fetch latest entries from Toggl
+    events:
+      - http:
+          path: events/latest/{api_key}
+          method: GET
+          private: true
+          request:
+          parameters:
+            paths:
+              api_key: true
+
 custom:
   webpack:
     webpackConfig: '../webpack.config.js' # Name of webpack configuration file

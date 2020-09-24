@@ -1,6 +1,6 @@
+import { formatDistance, formatISO } from 'date-fns';
+import { successResponse } from 'common-resources';
 import { LambdaEvent, LambdaResponse } from 'common-resources/types';
-
-import { generateDateString, successResponse } from 'common-resources';
 
 interface AppInformation {
   metrics: {
@@ -14,6 +14,11 @@ interface AppInformation {
     nextMigrationIn: string;
   };
 }
+
+export const generateDateString = (date: Date | number) => {
+  const readable = formatDistance(date, Date.now(), { addSuffix: true });
+  return `${formatISO(date)} (${readable})`;
+};
 
 export const getMetrics = async (
   event: LambdaEvent,
