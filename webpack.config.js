@@ -18,15 +18,6 @@ module.exports = {
     extensions: ['.ts', '.js'],
     symlinks: true,
   },
-  plugins:
-    process.env.ANALYZE_BUNDLE === 'true'
-      ? [
-          new analyzer.BundleAnalyzerPlugin({
-            analyzerMode: 'static',
-            reportFilename: 'report.html',
-          }),
-        ]
-      : [],
   module: {
     rules: [
       {
@@ -59,7 +50,7 @@ module.exports = {
   optimization: {
     sideEffects: true,
     usedExports: true,
-    minimize: false,
+    minimize: true,
     innerGraph: true,
   },
   externals: [],
