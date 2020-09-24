@@ -6,16 +6,29 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: eu-north-1
+  memorySize: 128
+  timeout: 5
+  versionFunctions: false
+
 package:
   individually: false
 
 functions:
-  hello:
-    handler: src/handler.hello
+  ping:
+    handler: src/handler/index.ping
+    description: handler to check if service is available
+    events:
+      - http:
+          path: ping
+          method: GET
+          # private: true
 
 custom:
   bundle:
-    caching: true # Enable Webpack caching
+    #caching: true # Enable Webpack caching
+    linting: false
+    sourcemaps: false
 
 plugins:
   - serverless-bundle
+  - serverless-offline
