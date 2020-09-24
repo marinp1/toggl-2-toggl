@@ -1,0 +1,17 @@
+{
+  "name": "sync-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sync entries from one Toggl account to another",
+  "main": "index.js",
+  "scripts": {
+    "pack:dev": "serverless package --stage dev",
+    "start:offline": "serverless offline",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "common-resources": "1.0.0"
+  },
+  "author": "Patrik Marin",
+  "license": "MIT"
+}

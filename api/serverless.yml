@@ -34,13 +34,13 @@ functions:
           private: true
 
 custom:
-  bundle:
-    caching: false # Enable Webpack caching
-    linting: false
-    sourcemaps: false
+  webpack:
+    webpackConfig: '../webpack.config.js' # Name of webpack configuration file
+    includeModules: false
+    packager: 'yarn'
   serverless-offline:
     noAuth: true
 
 plugins:
-  - serverless-bundle
+  - serverless-webpack
   - serverless-offline

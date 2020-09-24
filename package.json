@@ -1,28 +1,32 @@
 {
   "name": "toggl-2-toggl",
   "version": "1.0.0",
-  "description": "Sync entries from one Toggl account to another",
+  "private": true,
   "main": "index.js",
-  "scripts": {
-    "pack:dev": "serverless package --stage dev",
-    "start:offline": "serverless offline",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "workspaces": [
+    "api",
+    "common-resources"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marinp1/toggl-2-toggl.git"
   },
-  "author": "Patrik Marin",
+  "author": "Patrik Marin <dev@patrikmarin.fi>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/marinp1/toggl-2-toggl/issues"
   },
   "homepage": "https://github.com/marinp1/toggl-2-toggl#readme",
   "devDependencies": {
-    "serverless-bundle": "3.1.0",
     "serverless-offline": "^6.8.0"
   },
   "dependencies": {
-    "date-fns": "^2.16.1"
+    "cache-loader": "^4.1.0",
+    "serverless-webpack": "^5.3.5",
+    "thread-loader": "^3.0.0",
+    "ts-loader": "^8.0.4",
+    "typescript": "^4.0.3",
+    "webpack": "^4.44.2",
+    "webpack-node-externals": "^2.5.2"
   }
 }
