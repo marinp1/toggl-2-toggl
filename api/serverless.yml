@@ -33,6 +33,7 @@ provider:
     APP_STAGE: ${self:provider.stage}
     DYNAMO_ENTRIES_TABLE_NAME: ${self:service}-${self:provider.stage}-Entries
     DYNAMO_MAPPING_TABLE_NAME: ${self:service}-${self:provider.stage}-Mapping
+    DYNAMO_TASKS_TABLE_NAME: ${self:service}-${self:provider.stage}-Tasks
 
   apiKeys:
     - ${self:service}-${self:provider.stage}-apiKey

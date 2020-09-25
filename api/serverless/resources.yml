@@ -1,3 +1,4 @@
 Resources:
   TogglEntriesTable: ${file(./serverless/resources/dynamo-entries.yml)}
   TogglMappingTable: ${file(./serverless/resources/dynamo-mapping.yml)}
+  TogglTasksTable: ${file(./serverless/resources/dynamo-tasks.yml)}

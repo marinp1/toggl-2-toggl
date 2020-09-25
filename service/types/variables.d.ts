@@ -5,5 +5,6 @@ declare namespace NodeJS {
     APP_STAGE: string;
     DYNAMO_ENTRIES_TABLE_NAME: string;
     DYNAMO_MAPPING_TABLE_NAME: string;
+    DYNAMO_TASKS_TABLE_NAME: string;
   }
 }

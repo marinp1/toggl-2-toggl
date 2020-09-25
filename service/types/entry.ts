@@ -17,3 +17,10 @@ type DynamoEntryRow = {
   lastUpdated: string;
   mappedTo: string | null; // tid
 };
+
+type DynamoTaskRow = {
+  label: string;
+  sourceApiKeySSMRef: string;
+  targetApiKeySSMRef: string;
+  active: boolean;
+};

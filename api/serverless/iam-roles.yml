@@ -34,3 +34,16 @@
           - ':table/'
           - Ref: TogglMappingTable
           - '/index/*'
+    - Fn::Join:
+        - ''
+        - - 'arn:aws:dynamodb:${self:provider.region}:'
+          - Ref: 'AWS::AccountId'
+          - ':table/'
+          - Ref: TogglTasksTable
+    - Fn::Join:
+        - ''
+        - - 'arn:aws:dynamodb:${self:provider.region}:'
+          - Ref: 'AWS::AccountId'
+          - ':table/'
+          - Ref: TogglTasksTable
+          - '/index/*'
