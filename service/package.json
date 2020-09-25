@@ -16,6 +16,7 @@
     "lodash-es": "^4.17.15"
   },
   "devDependencies": {
-    "@types/lodash-es": "^4.17.3"
+    "@types/lodash-es": "^4.17.3",
+    "aws-sdk": "^2.760.0"
   }
 }

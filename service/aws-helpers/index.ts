@@ -1,0 +1,1 @@
+export { getSSMParameters } from './getSSMParameter';

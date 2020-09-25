@@ -47,3 +47,13 @@
           - ':table/'
           - Ref: TogglTasksTable
           - '/index/*'
+- Effect: 'Allow'
+  Action:
+    - 'secretsmanager:GetSecretValue'
+  Resource:
+    - Fn::Join:
+        - ''
+        - - 'arn:aws:secretsmanager:${self:provider.region}:'
+          - Ref: 'AWS::AccountId'
+          - ':secret:'
+          - '${self:service}/${self:provider.stage}/*'

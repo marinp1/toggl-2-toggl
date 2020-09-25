@@ -1,14 +1,38 @@
-import { prepareApi, getLatest } from 'toggl-api';
-import { successResponse } from 'service';
+import {
+  successResponse,
+  getSSMParameters,
+  fetchLatestTogglEntries,
+} from 'service';
 
 import { LambdaEvent, LambdaResponse } from 'service/types';
 import { TimeEntryResponse } from 'toggl-api/types';
 
+interface FetchLatestEntriesResponse {
+  sourceEntries: TimeEntryResponse[];
+  targetEntries: TimeEntryResponse[];
+}
+
 export const fetchLatestEntries = async (
   event: LambdaEvent,
-): LambdaResponse<TimeEntryResponse[]> => {
-  const { api_token } = event.pathParameters;
-  const getLatestEntries = prepareApi(getLatest, api_token);
-  const entries = await getLatestEntries(7);
-  return successResponse(entries);
+): LambdaResponse<FetchLatestEntriesResponse> => {
+  // 1. Get active tasks from dynamo
+  // 2. Get SSM parameters related tasks
+  // 3. Handle sync
+
+  const ssmNames = ['API_TOKEN_WORK', 'API_TOKEN_PERSONAL'] as const;
+  const ssmValues = await getSSMParameters(...ssmNames);
+
+  const [sourceEntries, targetEntries] = await Promise.all(
+    ssmNames.map(async (name) =>
+      fetchLatestTogglEntries({
+        apiToken: ssmValues[name],
+        days: 3,
+      }),
+    ),
+  );
+
+  return successResponse({
+    sourceEntries,
+    targetEntries,
+  });
 };

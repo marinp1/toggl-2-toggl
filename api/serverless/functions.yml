@@ -21,10 +21,6 @@ latest:
   description: fetch latest entries from Toggl
   events:
     - http:
-        path: events/latest/{api_token}
+        path: entries/latest
         method: GET
         private: true
-        request:
-        parameters:
-          paths:
-            api_key: true
