@@ -30,11 +30,11 @@ type RequiredTimeEntryProperties = {
     where current_time is the current time in seconds since epoch.
     (integer, required) */
   duration: number;
-  /* the name of your client app (string, required) */
-  created_with: string;
 };
 
 type OptionalTimeEntryProperties = Partial<{
+  guid: string;
+  id: number;
   /* workspace ID (integer, required if pid or tid not supplied) */
   wid: number;
   /*  project ID (integer, not required) */
@@ -53,14 +53,23 @@ type OptionalTimeEntryProperties = Partial<{
   /* timestamp that is sent in the response, indicates the time
     item was last updated */
   at: string;
+  /* the name of your client app (string, required) */
+  created_with: string;
 }>;
 
 export type TimeEntryResponse = RequiredTimeEntryProperties &
-  Required<Pick<OptionalTimeEntryProperties, 'wid' | 'pid' | 'tid' | 'at'>> &
-  Pick<OptionalTimeEntryProperties, 'billable' | 'stop' | 'tags'>;
+  Required<
+    Pick<OptionalTimeEntryProperties, 'guid' | 'id' | 'wid' | 'at' | 'duronly'>
+  > &
+  Pick<
+    OptionalTimeEntryProperties,
+    'billable' | 'stop' | 'tags' | 'pid' | 'tid'
+  >;
 
 type RunningTimeEntryRequest = RequiredTimeEntryProperties &
-  Required<Pick<OptionalTimeEntryProperties, 'wid' | 'tid' | 'pid'>> &
+  Required<
+    Pick<OptionalTimeEntryProperties, 'wid' | 'tid' | 'pid' | 'created_with'>
+  > &
   Pick<OptionalTimeEntryProperties, 'billable' | 'tags' | 'duronly'>;
 
 type CompletedTimeEntryRequest = RunningTimeEntryRequest &
