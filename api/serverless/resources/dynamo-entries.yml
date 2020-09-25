@@ -1,19 +1,19 @@
 Type: 'AWS::DynamoDB::Table'
 Properties:
   AttributeDefinitions:
-    - AttributeName: tid
+    - AttributeName: guid
       AttributeType: S
     - AttributeName: mappedTo
       AttributeType: S
   KeySchema:
-    - AttributeName: tid
+    - AttributeName: guid
       KeyType: HASH
   GlobalSecondaryIndexes:
     - IndexName: mappedTo-index
       KeySchema:
         - AttributeName: mappedTo
           KeyType: HASH
-        - AttributeName: tid
+        - AttributeName: guid
           KeyType: RANGE
       Projection:
         ProjectionType: ALL

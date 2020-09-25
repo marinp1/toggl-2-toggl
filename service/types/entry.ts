@@ -13,9 +13,9 @@ type DynamoMapRow = {
 
 type DynamoEntryRow = {
   type: 'source-entry' | 'target-entry';
-  tid: string; // tid
+  guid: string; // guid
   lastUpdated: string;
-  mappedTo: string | null; // tid
+  mappedTo: string | null; // guid
 };
 
 type DynamoTaskRow = {
