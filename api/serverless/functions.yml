@@ -1,7 +1,6 @@
 ping:
-  handler: src/handler/ping.ping
+  handler: handler/ping.ping
   description: handler to check if service is available
-  memorySize: 64
   events:
     - http:
         path: ping
@@ -9,7 +8,7 @@ ping:
         private: true
 
 metrics:
-  handler: src/handler/metrics.getMetrics
+  handler: handler/metrics.getMetrics
   description: fetch current state and metrics
   events:
     - http:
@@ -18,7 +17,7 @@ metrics:
         private: true
 
 latest:
-  handler: src/handler/fetch-entries.fetchLatestEntries
+  handler: handler/fetch-entries.fetchLatestEntries
   description: fetch latest entries from Toggl
   events:
     - http:

@@ -1,8 +1,8 @@
 import { prepareApi, getLatest } from 'toggl-api';
-import { successResponse } from 'common-resources';
+import { successResponse } from 'service';
 
-import { LambdaEvent, LambdaResponse } from 'common-resources/types';
-import { TimeEntryResponse, ApiMethod } from 'toggl-api/types';
+import { LambdaEvent, LambdaResponse } from 'service/types';
+import { TimeEntryResponse } from 'toggl-api/types';
 
 export const fetchLatestEntries = async (
   event: LambdaEvent,

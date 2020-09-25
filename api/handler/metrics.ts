@@ -1,6 +1,6 @@
 import { formatDistance, formatISO } from 'date-fns';
-import { successResponse } from 'common-resources';
-import { LambdaEvent, LambdaResponse } from 'common-resources/types';
+import { successResponse } from 'service';
+import { LambdaEvent, LambdaResponse } from 'service/types';
 
 interface AppInformation {
   metrics: {

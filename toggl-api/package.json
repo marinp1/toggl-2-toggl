@@ -7,6 +7,6 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "common-resources": "1.0.0"
+    "service": "1.0.0"
   }
 }

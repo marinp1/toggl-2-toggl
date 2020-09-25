@@ -5,7 +5,7 @@ const slsw = require('serverless-webpack');
 
 const commonNodeModulesPath = path.resolve(
   __dirname,
-  '../common-resources/node_modules',
+  '../service/node_modules',
 );
 
 module.exports = {
