@@ -18,12 +18,13 @@ const constructApi = (togglApiToken: string): ApiCall => {
   if (!togglApiToken) {
     throw new Error('No API token given!');
   }
-  const headers = new Headers();
-  headers.set(
-    'Authorization',
-    'Basic ' + Buffer.from(togglApiToken + ':api_token').toString('base64'),
-  );
-  headers.set('Content-Type', 'application/json');
+
+  const headers = {
+    Authorization:
+      'Basic ' + Buffer.from(togglApiToken + ':api_token').toString('base64'),
+    'Content-Type': 'application/json',
+  };
+
   return {
     get: <T>(endpoint: string) =>
       (fetch(endpoint, {

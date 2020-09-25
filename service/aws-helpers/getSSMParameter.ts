@@ -10,9 +10,13 @@ export const getSSMParameters = async (...parameterNames: string[]) => {
 
   const data = await SSM.getParameters({
     Names: [`${APP_NAME}-${APP_STAGE}`],
+    WithDecryption: true,
   }).promise();
 
-  const parameters = data.Parameters && data.Parameters[0].Value?.split('/n');
+  const parameters =
+    data.Parameters &&
+    data.Parameters[0].Value &&
+    data.Parameters[0].Value.split(/[\r\n]+/);
 
   if (!parameters) {
     throw new Error(
@@ -22,13 +26,10 @@ export const getSSMParameters = async (...parameterNames: string[]) => {
 
   const response = parameters.reduce<{ [paramName: string]: string }>(
     (prev, param) => {
-      const [name, value] = param
-        .split('=')
-        .map(([name, ...rest]) => [name, rest.join('')])
-        .flat();
+      const [name, ...rest] = param.split('=');
       return {
         ...prev,
-        [name.trim()]: value.trim(),
+        [name.trim()]: rest.join('').trim(),
       };
     },
     {},

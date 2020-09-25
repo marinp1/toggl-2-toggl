@@ -2,4 +2,19 @@ Resources:
   TogglEntriesTable: ${file(./serverless/resources/dynamo-entries.yml)}
   TogglMappingTable: ${file(./serverless/resources/dynamo-mapping.yml)}
   TogglTasksTable: ${file(./serverless/resources/dynamo-tasks.yml)}
-  AssumeRole: ${file(./serverless/resources/role-assume.yml)}
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - ${file(./serverless/policies/cloudwatch.yml)}
+        - ${file(./serverless/policies/dynamo.yml)}
+        - ${file(./serverless/policies/ssm.yml)}

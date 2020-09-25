@@ -1,0 +1,13 @@
+PolicyName: AccessSSMParameters
+PolicyDocument:
+  Version: '2012-10-17'
+  Statement:
+    - Effect: Allow
+      Action:
+        - ssm:GetParameters
+      Resource:
+        - Fn::Join:
+            - ''
+            - - 'arn:aws:ssm:${self:provider.region}:'
+              - Ref: 'AWS::AccountId'
+              - ':parameter/${self:service}-${self:provider.stage}'

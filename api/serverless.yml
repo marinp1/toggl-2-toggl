@@ -12,7 +12,7 @@ provider:
   region: eu-central-1
   stage: ${opt:stage}
 
-  role: AssumeRole
+  role: LambdaRole
 
   memorySize: 128
   timeout: 5
@@ -39,8 +39,6 @@ provider:
 
   apiKeys:
     - ${self:service}-${self:provider.stage}-apiKey
-
-  iamRoleStatements: ${file(./serverless/iam-roles.yml)}
 
   stackTags:
     CostCentre: patrikmarin-apps

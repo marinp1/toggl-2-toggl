@@ -50,7 +50,7 @@ module.exports = {
   optimization: {
     sideEffects: true,
     usedExports: true,
-    minimize: false,
+    minimize: true,
     innerGraph: true,
   },
   externals: [
