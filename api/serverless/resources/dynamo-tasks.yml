@@ -11,7 +11,7 @@ Properties:
     - AttributeName: sourceApiKeySSMRef
       KeyType: HASH
     - AttributeName: targetApiKeySSMRef
-      KeyType: HASH
+      KeyType: RANGE
   GlobalSecondaryIndexes:
     - IndexName: active-index
       KeySchema:

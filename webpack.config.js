@@ -53,5 +53,9 @@ module.exports = {
     minimize: false,
     innerGraph: true,
   },
-  externals: [],
+  externals: [
+    {
+      'aws-sdk': 'commonjs aws-sdk',
+    },
+  ],
 };
