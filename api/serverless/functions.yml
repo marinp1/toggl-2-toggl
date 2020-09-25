@@ -19,6 +19,7 @@ metrics:
 latest:
   handler: handler/fetch-entries.fetchLatestEntries
   description: fetch latest entries from Toggl
+  timeout: 10
   events:
     - http:
         path: entries/latest
