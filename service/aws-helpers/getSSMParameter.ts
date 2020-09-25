@@ -9,28 +9,38 @@ export const getSSMParameters = async (...parameterNames: string[]) => {
   const SSM = new AWS.SSM();
 
   const data = await SSM.getParameters({
-    Names: parameterNames.map((param) => `${APP_NAME}/${APP_STAGE}/${param}`),
+    Names: [`${APP_NAME}-${APP_STAGE}`],
   }).promise();
 
-  if (!data.Parameters) {
-    return {};
+  const parameters = data.Parameters && data.Parameters[0].Value?.split('/n');
+
+  if (!parameters) {
+    throw new Error(
+      `Failed to find SSM parameter with name ${APP_NAME}-${APP_STAGE}`,
+    );
   }
 
-  const response = data.Parameters.reduce<{
-    [paramName: string]: string | undefined;
-  }>(
-    (prev, cur) => ({
-      ...prev,
-      [String(cur.Name).replace(`${APP_NAME}/${APP_STAGE}/`, '')]: cur.Value,
-    }),
+  const response = parameters.reduce<{ [paramName: string]: string }>(
+    (prev, param) => {
+      const [name, value] = param
+        .split('=')
+        .map(([name, ...rest]) => [name, rest.join('')])
+        .flat();
+      return {
+        ...prev,
+        [name.trim()]: value.trim(),
+      };
+    },
     {},
   );
 
   if (parameterNames.some((paramName) => !response[paramName])) {
+    console.debug(`Found keys ${Object.keys(response).join(',')}`);
+
     throw new Error(
       `Some of the parameters were not found from SSM [${parameterNames.join(
         ', ',
-      )}], make sure that the parameter names do not include app name or stage.`,
+      )}], please validate that configuration is correct.`,
     );
   }
 

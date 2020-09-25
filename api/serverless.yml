@@ -12,6 +12,8 @@ provider:
   region: eu-central-1
   stage: ${opt:stage}
 
+  role: AssumeRole
+
   memorySize: 128
   timeout: 5
   versionFunctions: false

@@ -49,11 +49,10 @@
           - '/index/*'
 - Effect: 'Allow'
   Action:
-    - 'secretsmanager:GetSecretValue'
+    - 'ssm:GetParameters'
   Resource:
     - Fn::Join:
         - ''
-        - - 'arn:aws:secretsmanager:${self:provider.region}:'
+        - - 'arn:aws:ssm:${self:provider.region}:'
           - Ref: 'AWS::AccountId'
-          - ':secret:'
-          - '${self:service}/${self:provider.stage}/*'
+          - ':parameter/${self:service}-${self:provider.stage}'
