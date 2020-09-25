@@ -22,6 +22,6 @@ Properties:
       Projection:
         ProjectionType: ALL
   BillingMode: PAY_PER_REQUEST
-  TableName: ${self:environment.DYNAMO_ENTRIES_TABLE_NAME}
+  TableName: ${self:provider:environment.DYNAMO_ENTRIES_TABLE_NAME}
   SSESpecification:
     SSEEnabled: true
