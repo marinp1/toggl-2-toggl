@@ -1,8 +1,6 @@
 Type: 'AWS::DynamoDB::Table'
 Properties:
   AttributeDefinitions:
-    - AttributeName: label
-      AttributeType: S
     - AttributeName: sourceWid
       AttributeType: S
     - AttributeName: sourcePid
@@ -11,8 +9,6 @@ Properties:
       AttributeType: S
     - AttributeName: targetPid
       AttributeType: S
-    - AttributeName: overrides
-      AttributeType: M
   KeySchema:
     - AttributeName: sourceWid
       KeyType: HASH
@@ -28,6 +24,6 @@ Properties:
       Projection:
         ProjectionType: ALL
   BillingMode: PAY_PER_REQUEST
-  TableName: ${self:provider:environment.DYNAMO_MAPPING_TABLE_NAME}
+  TableName: ${self:provider.environment.DYNAMO_MAPPING_TABLE_NAME}
   SSESpecification:
     SSEEnabled: true
