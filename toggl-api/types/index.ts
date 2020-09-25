@@ -1,3 +1,5 @@
+import { Response } from 'node-fetch';
+
 export type TypedResponse<T extends object | {} = {}> = Omit<
   Response,
   'json'

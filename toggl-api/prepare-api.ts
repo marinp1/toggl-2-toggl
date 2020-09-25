@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 import { ApiCall, TypedResponse, ApiMethod } from './types';
 
 type TogglWrapper<T> = {
