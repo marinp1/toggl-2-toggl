@@ -1,0 +1,3 @@
+Resources:
+  TogglEntriesTable: ${file(./serverless/resources/dynamo-entries.yml)}
+  TogglMappingTable: ${file(./serverless/resources/dynamo-mapping.yml)}

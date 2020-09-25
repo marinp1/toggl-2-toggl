@@ -1,50 +1,46 @@
-service: toggl-2-toggl
+service: toggl-sync
 #app: toggl-2-toggl
 #org: marinp1
-
-provider:
-  name: aws
-  runtime: nodejs12.x
-  region: eu-central-1
-  memorySize: 128
-  timeout: 5
-  versionFunctions: false
 
 package:
   individually: true
 
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+  region: eu-central-1
+  stage: ${opt:stage}
+
+  memorySize: 128
+  timeout: 5
+  versionFunctions: false
+
+  environment:
+    APP_VERSION: ${file(../package.json):version}
+    APP_NAME: ${self:service}
+    APP_STAGE: ${self:provider.stage}
+    DYNAMO_ENTRIES_TABLE_NAME: ${self:service}-${self:provider.stage}-Entries
+    DYNAMO_MAPPING_TABLE_NAME: ${self:service}-${self:provider.stage}-Mapping
+
+  apiKeys:
+    - ${self:service}-${self:provider.stage}-apiKey
+
+  iamRoleStatements: ${file(./serverless/iam-roles.yml)}
+
+  stackTags:
+    CostCentre: patrikmarin-apps
+    Environment: ${self:provider.stage}
+
+  tags:
+    CostCentre: patrikmarin-apps
+    Environment: ${self:provider.stage}
+
 functions:
-  ping:
-    handler: src/handler/ping.ping
-    description: handler to check if service is available
-    memorySize: 64
-    events:
-      - http:
-          path: ping
-          method: GET
-          private: true
+  - ${file(./serverless/functions.yml)}
 
-  metrics:
-    handler: src/handler/metrics.getMetrics
-    description: fetch current state and metrics
-    events:
-      - http:
-          path: metrics
-          method: GET
-          private: true
-
-  latest:
-    handler: src/handler/fetch-entries.fetchLatestEntries
-    description: fetch latest entries from Toggl
-    events:
-      - http:
-          path: events/latest/{api_token}
-          method: GET
-          private: true
-          request:
-          parameters:
-            paths:
-              api_key: true
+resources:
+  - ${file(./serverless/resources.yml)}
 
 custom:
   webpack:

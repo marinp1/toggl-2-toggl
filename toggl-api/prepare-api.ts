@@ -1,4 +1,4 @@
-import { ApiCall, TypedResponse } from './types';
+import { ApiCall, TypedResponse, ApiMethod } from './types';
 
 type TogglWrapper<T> = {
   data: T;
@@ -14,7 +14,7 @@ const handleResponse = <T>(resp: TypedResponse<T>) => {
   }
 };
 
-export const prepareApi = (togglApiToken: string): ApiCall => {
+const constructApi = (togglApiToken: string): ApiCall => {
   if (!togglApiToken) {
     throw new Error('No API token given!');
   }
@@ -47,3 +47,8 @@ export const prepareApi = (togglApiToken: string): ApiCall => {
         .then((data) => data.data),
   };
 };
+
+export const prepareApi = <T, U extends any[]>(
+  method: ApiMethod<T, U>,
+  apiToken: string,
+) => method(constructApi(apiToken));
