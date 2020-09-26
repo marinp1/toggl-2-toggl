@@ -10,14 +10,13 @@ import { LambdaEvent, LambdaResponse, DynamoTaskRow } from 'service/types';
 import { TimeEntryResponse } from 'toggl-api/types';
 
 interface FetchLatestEntriesResponse {
-  successes: Array<{
-    [label: string]: {
-      existingEntries?: TimeEntryResponse[];
-      newEntries?: TimeEntryResponse[];
-      deletedEntries?: TimeEntryResponse[];
-    };
-  }>;
-  failures: Array<Record<string, string>>;
+  [label: string]: {
+    status: 'OK' | 'FAILURE';
+    error?: string;
+    existingEntries?: TimeEntryResponse[];
+    newEntries?: TimeEntryResponse[];
+    deletedEntries?: TimeEntryResponse[];
+  };
 }
 
 const parseEntries = async ({
@@ -68,18 +67,17 @@ export const fetchLatestEntries = async (
         gsiName: 'active',
         valueToFind: 1,
       })
-    )
-      .filter((ap) => !!ap.label)
-      .reduce<Record<string, DynamoTaskRow>>(
-        (acc, cur) => ({
-          ...acc,
-          [cur.label]: cur,
-        }),
-        {},
-      );
+    ).reduce<Record<string, DynamoTaskRow>>(
+      (acc, cur, ind) => ({
+        ...acc,
+        [cur.label || `unlabeled-${ind + 1}`]: cur,
+      }),
+      {},
+    );
 
+    // Get task results in parallel
     const taskResults = await Promise.allSettled(
-      Object.entries(activeProcesses).map(
+      Object.entries(activeProcesses).map<Promise<FetchLatestEntriesResponse>>(
         async ([label, { sourceApiKeySSMRef, targetApiKeySSMRef }]) => {
           try {
             const ssmValues = await getSSMParameters(
@@ -100,6 +98,7 @@ export const fetchLatestEntries = async (
 
             return {
               [label]: {
+                status: 'OK',
                 ...(await parseEntries({
                   sourceEntries: sourceEntries,
                   targetEntries: targetEntries,
@@ -108,24 +107,27 @@ export const fetchLatestEntries = async (
             };
           } catch (e) {
             console.error(e);
-            return Promise.reject({ [label]: e.message });
+            return Promise.reject({
+              [label]: {
+                status: 'FAILURE',
+                error: e.message,
+              },
+            });
           }
         },
       ),
     );
 
+    // Combine results
     const response = taskResults.reduce<FetchLatestEntriesResponse>(
       (acc, taskResult) => {
-        if (taskResult.status === 'fulfilled')
-          acc.successes.push(taskResult.value);
-        if (taskResult.status === 'rejected')
-          acc.failures.push(taskResult.reason);
-        return acc;
+        const data =
+          taskResult.status === 'fulfilled'
+            ? taskResult.value
+            : taskResult.reason;
+        return { ...acc, ...data };
       },
-      {
-        successes: [],
-        failures: [],
-      },
+      {},
     );
 
     return successResponse(response);
