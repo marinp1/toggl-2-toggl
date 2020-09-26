@@ -5,6 +5,7 @@ import {
   fetchLatestTogglEntries,
   queryDynamoTableGSI,
   batchGetDynamoItems,
+  mapEntryForRequest,
 } from 'service';
 
 import {
@@ -12,8 +13,10 @@ import {
   LambdaResponse,
   DynamoTaskRow,
   DynamoEntryRow,
+  DynamoMapRow,
 } from 'service/types';
-import { TimeEntryResponse } from 'toggl-api/types';
+
+import { TimeEntryResponse, TimeEntryRequest } from 'toggl-api/types';
 
 Array.prototype.intersectBy = function(arr, iteratee) {
   const setA = new Set(this.map(iteratee));
@@ -29,13 +32,17 @@ Array.prototype.differenceBy = function(arr, iteratee) {
   return this.filter((x) => !intersectionList.has(iteratee(x)));
 };
 
+Array.prototype.uniq = function() {
+  return [...new Set(this)];
+};
+
 interface FetchLatestEntriesResponse {
   [label: string]: {
     status: 'OK' | 'FAILURE';
     error?: string;
-    existingEntries?: TimeEntryResponse[];
-    newEntries?: TimeEntryResponse[];
-    deletedEntries?: DynamoEntryRow[];
+    modifiedEntries?: Record<string, TimeEntryRequest>;
+    newEntries?: TimeEntryRequest[];
+    deletedEntries?: string[];
   };
 }
 
@@ -54,7 +61,7 @@ const parseEntries = async (params: ParseEntriesInput) => {
     targetDynamoEntries,
   } = params;
 
-  const dynamoIteratee = (val: { guid: string }) => val.guid;
+  const dynamoIteratee = (val: { id: string | number }) => String(val.id);
 
   const togglIteratee = (val: Pick<TimeEntryResponse, 'duration' | 'start'>) =>
     `${val.duration}${val.start}`;
@@ -84,8 +91,8 @@ const parseEntries = async (params: ParseEntriesInput) => {
   // mark the entry to be modified
   const modifiedEntries = existingEntries.filter(
     (te) =>
-      sourceDynamoEntries.find((de) => de.guid === te.guid)!.lastUpdated <
-      te.at,
+      sourceDynamoEntries.find((de) => String(de.id) === String(te.id))!
+        .lastUpdated < te.at,
   );
 
   // Fetch mapped DynamoDB entries for the Toggl entries that were
@@ -93,7 +100,7 @@ const parseEntries = async (params: ParseEntriesInput) => {
   const previousSourceDynamoEntries = await batchGetDynamoItems<DynamoEntryRow>(
     {
       tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-      keyName: 'guid',
+      keyName: 'id',
       valuesToFind: targetDynamoEntries.map((e) => e.mappedTo),
     },
   );
@@ -160,7 +167,7 @@ export const fetchLatestEntries = async (
             );
 
             // Get matching DynamoDB entries for entries received from Toggl
-            // i.e. DynamoDB row guid matches Toggl time entry guid
+            // i.e. DynamoDB row id matches Toggl time entry id
             const [
               sourceDynamoEntries,
               targetDynamoEntries,
@@ -168,8 +175,8 @@ export const fetchLatestEntries = async (
               [sourceTogglEntries, targetTogglEntries].map(async (entries) =>
                 batchGetDynamoItems<DynamoEntryRow>({
                   tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-                  keyName: 'guid',
-                  valuesToFind: entries.map((e) => e.guid),
+                  keyName: 'id',
+                  valuesToFind: entries.map((e) => String(e.id)),
                 }),
               ),
             );
@@ -187,14 +194,48 @@ export const fetchLatestEntries = async (
               targetDynamoEntries,
             });
 
-            // Fetch mapping
+            // Workspace IDs for all required entries
+            const workspaceIds = [...entriesToCreateRaw, ...entriesToModifyRaw]
+              .map((a) => String(a.wid))
+              .uniq();
+
+            // Entry mappings for workspace IDs
+            const entryMappings = await batchGetDynamoItems<DynamoMapRow>({
+              tableName: process.env.DYNAMO_MAPPING_TABLE_NAME,
+              keyName: 'sourceWid',
+              valuesToFind: workspaceIds,
+            });
+
+            const isValidRequest = (
+              val: TimeEntryRequest | any,
+            ): val is TimeEntryRequest =>
+              !!(val as TimeEntryRequest).created_with;
+
+            const entriesToCreate = entriesToCreateRaw
+              .map((e) => mapEntryForRequest(e, entryMappings))
+              .filter(isValidRequest);
+
+            const entriesToModify = entriesToModifyRaw.reduce<
+              Record<string, TimeEntryRequest>
+            >(
+              (acc, e) => ({
+                ...acc,
+                [e.id]: mapEntryForRequest(e, entryMappings),
+              }),
+              {},
+            );
+
+            const entriesToDelete = entriesToDeleteRaw.map((e) => e.id);
+
+            // Create / update / modify entries
+            // Write dynamoDB rows
 
             return {
               [label]: {
                 status: 'OK',
-                newEntries: entriesToCreateRaw,
-                modifiedEntries: entriesToModifyRaw,
-                deletedEntries: entriesToDeleteRaw,
+                newEntries: entriesToCreate,
+                modifiedEntries: entriesToModify,
+                deletedEntries: entriesToDelete,
               },
             };
           } catch (e) {

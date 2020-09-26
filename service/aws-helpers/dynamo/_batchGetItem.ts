@@ -6,14 +6,14 @@ import { valueToAttributeValue, parseDynamoItem } from './dynamoValueMappers';
 
 import { DynamoMapValue, DynamoSingleValue } from '../../types';
 
-interface DynamoGetItemParams {
+interface DynamoGetItemParams<T extends DynamoMapValue> {
   tableName: string | undefined;
-  keyName: string;
+  keyName: keyof T;
   valuesToFind: DynamoSingleValue[];
 }
 
 export const batchGetDynamoItems = async <ResponseItemType>(
-  params: DynamoGetItemParams,
+  params: DynamoGetItemParams<ResponseItemType>,
 ): Promise<ResponseItemType[]> => {
   const { tableName, keyName, valuesToFind } = params;
   const client = getDynamoClient();

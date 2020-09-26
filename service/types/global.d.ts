@@ -18,6 +18,8 @@ declare global {
   }
   export interface Array<T> {
     join<T>(separator?: T): Stringified<T>;
+    uniq<U extends T>(): Array<U>;
+    uniqBy<T>(iteratee: (value: T) => string): Array<T>;
     intersectBy<U>(
       arr: U[],
       iteratee: (value: Record<Extract<keyof U, keyof T>, any>) => string,

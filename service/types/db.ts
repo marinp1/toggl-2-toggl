@@ -8,16 +8,16 @@ export type DynamoMapRow = DynamoMapValue<{
   targetPid: string | null;
   overrides: {
     billable: boolean | null;
-    labels: string[] | null;
+    tags: string[] | null;
     description: string | null;
   } | null;
 }>;
 
 export type DynamoEntryRow = DynamoMapValue<{
   type: 'source-entry' | 'target-entry';
-  guid: string; // guid
+  id: string; // id
   lastUpdated: string;
-  mappedTo: string; // guid
+  mappedTo: string; // id
 }>;
 
 export type DynamoTaskRow = DynamoMapValue<{

@@ -46,7 +46,6 @@ type RequiredTimeEntryProperties = {
 };
 
 type OptionalTimeEntryProperties = Partial<{
-  guid: string;
   id: number;
   /* workspace ID (integer, required if pid or tid not supplied) */
   wid: number;
@@ -71,23 +70,15 @@ type OptionalTimeEntryProperties = Partial<{
 }>;
 
 export type TimeEntryResponse = RequiredTimeEntryProperties &
-  Required<
-    Pick<OptionalTimeEntryProperties, 'guid' | 'id' | 'wid' | 'at' | 'duronly'>
-  > &
+  Required<Pick<OptionalTimeEntryProperties, 'id' | 'wid' | 'at' | 'duronly'>> &
   Pick<
     OptionalTimeEntryProperties,
     'billable' | 'stop' | 'tags' | 'pid' | 'tid'
   >;
 
-type RunningTimeEntryRequest = RequiredTimeEntryProperties &
-  Required<
-    Pick<OptionalTimeEntryProperties, 'wid' | 'tid' | 'pid' | 'created_with'>
-  > &
-  Pick<OptionalTimeEntryProperties, 'billable' | 'tags' | 'duronly'>;
-
-type CompletedTimeEntryRequest = RunningTimeEntryRequest &
-  Required<Pick<OptionalTimeEntryProperties, 'stop'>>;
-
-export type TimeEntryRequest =
-  | RunningTimeEntryRequest
-  | CompletedTimeEntryRequest;
+export type TimeEntryRequest = RequiredTimeEntryProperties &
+  Required<Pick<OptionalTimeEntryProperties, 'wid' | 'created_with'>> &
+  Pick<
+    OptionalTimeEntryProperties,
+    'billable' | 'pid' | 'tags' | 'duronly' | 'stop'
+  >;
