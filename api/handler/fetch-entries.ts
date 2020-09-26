@@ -10,11 +10,14 @@ import { LambdaEvent, LambdaResponse, DynamoTaskRow } from 'service/types';
 import { TimeEntryResponse } from 'toggl-api/types';
 
 interface FetchLatestEntriesResponse {
-  [label: string]: {
-    existingEntries: TimeEntryResponse[];
-    newEntries: TimeEntryResponse[];
-    deletedEntries: TimeEntryResponse[];
-  };
+  successes: Array<{
+    [label: string]: {
+      existingEntries?: TimeEntryResponse[];
+      newEntries?: TimeEntryResponse[];
+      deletedEntries?: TimeEntryResponse[];
+    };
+  }>;
+  failures: Array<Record<string, string>>;
 }
 
 const parseEntries = async ({
@@ -59,51 +62,73 @@ export const fetchLatestEntries = async (
     // 2. Get SSM parameters related tasks
     // 3. Handle sync
 
-    const activeProcesses = await queryDynamoTableGSI<DynamoTaskRow>({
-      tableName: process.env.DYNAMO_TASKS_TABLE_NAME,
-      gsiName: 'active',
-      valueToFind: 1,
-    });
+    const activeProcesses = (
+      await queryDynamoTableGSI<DynamoTaskRow>({
+        tableName: process.env.DYNAMO_TASKS_TABLE_NAME,
+        gsiName: 'active',
+        valueToFind: 1,
+      })
+    )
+      .filter((ap) => !!ap.label)
+      .reduce<Record<string, DynamoTaskRow>>(
+        (acc, cur) => ({
+          ...acc,
+          [cur.label]: cur,
+        }),
+        {},
+      );
 
-    // Get unique list of SSM secret names
-    const allSSMNames = [
-      ...new Set(
-        activeProcesses
-          .map((ap) => [ap.sourceApiKeySSMRef, ap.targetApiKeySSMRef])
-          .flat(),
-      ),
-    ];
+    const taskResults = await Promise.allSettled(
+      Object.entries(activeProcesses).map(
+        async ([label, { sourceApiKeySSMRef, targetApiKeySSMRef }]) => {
+          try {
+            const ssmValues = await getSSMParameters(
+              sourceApiKeySSMRef,
+              targetApiKeySSMRef,
+            );
 
-    // Fetch SSM parameters
-    const ssmValues = await getSSMParameters(...allSSMNames);
+            const [sourceEntries, targetEntries] = await Promise.all(
+              [sourceApiKeySSMRef, targetApiKeySSMRef].map(async (ssmName) =>
+                (
+                  await fetchLatestTogglEntries({
+                    apiToken: ssmValues[ssmName],
+                    days: 3,
+                  })
+                ).filter((entry) => entry.duration > 0),
+              ),
+            );
 
-    // Fetch toggl entries parallel
-    const togglEntries = (
-      await Promise.all(
-        allSSMNames.map(async (ssmName) => ({
-          [ssmName]: await fetchLatestTogglEntries({
-            apiToken: ssmValues[ssmName],
-            days: 3,
-          }).then((entries) => entries.filter((entry) => entry.duration > 0)),
-        })),
-      )
-    ).reduce((acc, cur) => ({ ...acc, ...cur }), {});
-
-    // Parse entries parallel
-    const parsedEntries = (
-      await Promise.all(
-        activeProcesses.map(
-          async ({ sourceApiKeySSMRef, targetApiKeySSMRef, label }) => {
             return {
-              [label || 'unlabeled']: await parseEntries({
-                sourceEntries: togglEntries[sourceApiKeySSMRef],
-                targetEntries: togglEntries[targetApiKeySSMRef],
-              }),
+              [label]: {
+                ...(await parseEntries({
+                  sourceEntries: sourceEntries,
+                  targetEntries: targetEntries,
+                })),
+              },
             };
-          },
-        ),
-      )
-    ).reduce((acc, cur) => ({ ...acc, ...cur }), {});
+          } catch (e) {
+            console.error(e);
+            return Promise.reject({ [label]: e.message });
+          }
+        },
+      ),
+    );
+
+    const response = taskResults.reduce<FetchLatestEntriesResponse>(
+      (acc, taskResult) => {
+        if (taskResult.status === 'fulfilled')
+          acc.successes.push(taskResult.value);
+        if (taskResult.status === 'rejected')
+          acc.failures.push(taskResult.reason);
+        return acc;
+      },
+      {
+        successes: [],
+        failures: [],
+      },
+    );
+
+    return successResponse(response);
 
     // Get mapping from dynamo DB and filter
     // 1. fetch mapping for source entries
@@ -124,8 +149,6 @@ export const fetchLatestEntries = async (
     //       CASE - SKIP
     //    else:
     //       CASE - DELETE
-
-    return successResponse(parsedEntries);
   } catch (err) {
     return errorResponse(err);
   }
