@@ -120,9 +120,15 @@ export const fetchLatestEntries = async (
               dynamoIteratee,
             );
 
-            const modifiedEntries = sourceEntries.intersectBy(
+            const existingEntries = sourceEntries.intersectBy(
               sourceDynamoEntries,
               dynamoIteratee,
+            );
+
+            const modifiedEntries = existingEntries.filter(
+              (te) =>
+                sourceDynamoEntries.find((de) => de.guid === te.guid)!
+                  .lastUpdated < te.at,
             );
 
             const deletedEntries = sourceDynamoEntries.differenceBy(
