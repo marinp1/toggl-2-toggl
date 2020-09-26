@@ -6,7 +6,7 @@ Properties:
     - AttributeName: targetApiKeySSMRef
       AttributeType: S
     - AttributeName: active
-      AttributeType: B
+      AttributeType: N
   KeySchema:
     - AttributeName: sourceApiKeySSMRef
       KeyType: HASH

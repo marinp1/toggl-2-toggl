@@ -33,6 +33,7 @@ provider:
     APP_VERSION: ${file(../package.json):version}
     APP_NAME: ${self:service}
     APP_STAGE: ${self:provider.stage}
+    APP_REGION: ${self:provider.region}
     DYNAMO_ENTRIES_TABLE_NAME: ${self:service}-${self:provider.stage}-Entries
     DYNAMO_MAPPING_TABLE_NAME: ${self:service}-${self:provider.stage}-Mapping
     DYNAMO_TASKS_TABLE_NAME: ${self:service}-${self:provider.stage}-Tasks
