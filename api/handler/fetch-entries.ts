@@ -1,5 +1,6 @@
 import {
   successResponse,
+  errorResponse,
   getSSMParameters,
   fetchLatestTogglEntries,
   queryDynamoTableGSI,
@@ -53,75 +54,79 @@ const parseEntries = async ({
 export const fetchLatestEntries = async (
   event: LambdaEvent,
 ): LambdaResponse<FetchLatestEntriesResponse> => {
-  // 1. Get active tasks from dynamo
-  // 2. Get SSM parameters related tasks
-  // 3. Handle sync
+  try {
+    // 1. Get active tasks from dynamo
+    // 2. Get SSM parameters related tasks
+    // 3. Handle sync
 
-  const activeProcesses = await queryDynamoTableGSI<DynamoTaskRow>({
-    tableName: process.env.DYNAMO_TASKS_TABLE_NAME,
-    gsiName: 'active',
-    valueToFind: 1,
-  });
+    const activeProcesses = await queryDynamoTableGSI<DynamoTaskRow>({
+      tableName: process.env.DYNAMO_TASKS_TABLE_NAME,
+      gsiName: 'active',
+      valueToFind: 1,
+    });
 
-  // Get unique list of SSM secret names
-  const allSSMNames = [
-    ...new Set(
-      activeProcesses
-        .map((ap) => [ap.sourceApiKeySSMRef, ap.targetApiKeySSMRef])
-        .flat(),
-    ),
-  ];
-
-  // Fetch SSM parameters
-  const ssmValues = await getSSMParameters(...allSSMNames);
-
-  // Fetch toggl entries parallel
-  const togglEntries = (
-    await Promise.all(
-      allSSMNames.map(async (ssmName) => ({
-        [ssmName]: await fetchLatestTogglEntries({
-          apiToken: ssmValues[ssmName],
-          days: 3,
-        }).then((entries) => entries.filter((entry) => entry.duration > 0)),
-      })),
-    )
-  ).reduce((acc, cur) => ({ ...acc, ...cur }), {});
-
-  // Parse entries parallel
-  const parsedEntries = (
-    await Promise.all(
-      activeProcesses.map(
-        async ({ sourceApiKeySSMRef, targetApiKeySSMRef, label }) => {
-          return {
-            [label || 'unlabeled']: await parseEntries({
-              sourceEntries: togglEntries[sourceApiKeySSMRef],
-              targetEntries: togglEntries[targetApiKeySSMRef],
-            }),
-          };
-        },
+    // Get unique list of SSM secret names
+    const allSSMNames = [
+      ...new Set(
+        activeProcesses
+          .map((ap) => [ap.sourceApiKeySSMRef, ap.targetApiKeySSMRef])
+          .flat(),
       ),
-    )
-  ).reduce((acc, cur) => ({ ...acc, ...cur }), {});
+    ];
 
-  // Get mapping from dynamo DB and filter
-  // 1. fetch mapping for source entries
-  // 2. override
+    // Fetch SSM parameters
+    const ssmValues = await getSSMParameters(...allSSMNames);
 
-  // Get entries from dynamo and decide case
-  // 1. sourceEntries -- check if exists
-  //    if exists:
-  //        check if has been modified (updatedAt in toggl > updatedAt in dynamo)
-  //        if modified:
-  //          CASE - UPDATE
-  //        else:
-  //          CASE - SKIP
-  //    else:
-  //      CASE - CREATE
-  // 2. targetEntries -- check if exists
-  //    if exists:
-  //       CASE - SKIP
-  //    else:
-  //       CASE - DELETE
+    // Fetch toggl entries parallel
+    const togglEntries = (
+      await Promise.all(
+        allSSMNames.map(async (ssmName) => ({
+          [ssmName]: await fetchLatestTogglEntries({
+            apiToken: ssmValues[ssmName],
+            days: 3,
+          }).then((entries) => entries.filter((entry) => entry.duration > 0)),
+        })),
+      )
+    ).reduce((acc, cur) => ({ ...acc, ...cur }), {});
 
-  return successResponse(parsedEntries);
+    // Parse entries parallel
+    const parsedEntries = (
+      await Promise.all(
+        activeProcesses.map(
+          async ({ sourceApiKeySSMRef, targetApiKeySSMRef, label }) => {
+            return {
+              [label || 'unlabeled']: await parseEntries({
+                sourceEntries: togglEntries[sourceApiKeySSMRef],
+                targetEntries: togglEntries[targetApiKeySSMRef],
+              }),
+            };
+          },
+        ),
+      )
+    ).reduce((acc, cur) => ({ ...acc, ...cur }), {});
+
+    // Get mapping from dynamo DB and filter
+    // 1. fetch mapping for source entries
+    // 2. override
+
+    // Get entries from dynamo and decide case
+    // 1. sourceEntries -- check if exists
+    //    if exists:
+    //        check if has been modified (updatedAt in toggl > updatedAt in dynamo)
+    //        if modified:
+    //          CASE - UPDATE
+    //        else:
+    //          CASE - SKIP
+    //    else:
+    //      CASE - CREATE
+    // 2. targetEntries -- check if exists
+    //    if exists:
+    //       CASE - SKIP
+    //    else:
+    //       CASE - DELETE
+
+    return successResponse(parsedEntries);
+  } catch (err) {
+    return errorResponse(err);
+  }
 };
