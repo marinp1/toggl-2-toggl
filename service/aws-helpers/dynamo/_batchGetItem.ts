@@ -1,5 +1,9 @@
 import { chunk } from 'lodash-es';
-import { BatchGetItemInput } from 'aws-sdk/clients/dynamodb';
+import DynamoDB, {
+  BatchGetItemInput,
+  KeyList,
+  Key,
+} from 'aws-sdk/clients/dynamodb';
 import { getDynamoClient } from './getDynamoClient';
 
 import { valueToAttributeValue, parseDynamoItem } from './dynamoValueMappers';
@@ -8,14 +12,15 @@ import { DynamoMapValue, DynamoSingleValue } from '../../types';
 
 interface DynamoGetItemParams<T extends DynamoMapValue> {
   tableName: string | undefined;
-  keyName: keyof T;
-  valuesToFind: DynamoSingleValue[];
+  hashKeyName: keyof T;
+  rangeKeyName?: keyof T;
+  valuesToFind: { hashKey: DynamoSingleValue; rangeKey?: DynamoSingleValue }[];
 }
 
 export const batchGetDynamoItems = async <ResponseItemType>(
   params: DynamoGetItemParams<ResponseItemType>,
 ): Promise<ResponseItemType[]> => {
-  const { tableName, keyName, valuesToFind } = params;
+  const { tableName, hashKeyName, rangeKeyName, valuesToFind } = params;
   const client = getDynamoClient();
 
   if (!tableName) {
@@ -32,9 +37,17 @@ export const batchGetDynamoItems = async <ResponseItemType>(
           RequestItems: {
             [tableName]: {
               ConsistentRead: true,
-              Keys: valueChunk
-                .map(valueToAttributeValue)
-                .map((val) => ({ [keyName]: val })),
+              Keys: valueChunk.map(({ hashKey, rangeKey }) => {
+                const keyValue: Key = {};
+                keyValue[hashKeyName as string] = valueToAttributeValue(
+                  hashKey,
+                );
+                if (rangeKeyName && rangeKey)
+                  keyValue[rangeKeyName as string] = valueToAttributeValue(
+                    rangeKey,
+                  );
+                return keyValue;
+              }),
             },
           },
         };
@@ -51,9 +64,8 @@ export const batchGetDynamoItems = async <ResponseItemType>(
           console.debug(batchGetItemInput);
           console.debug(err);
           throw new Error(
-            `Failed to batch get items from ${tableName} with key ${keyName} with values ${valueChunk.join(
-              ', ',
-            )}`,
+            `Failed to batch get items from ${tableName} with hash key ${hashKeyName} and range key ${rangeKeyName ||
+              '[none]'} with values ${Object.keys(valueChunk).join(', ')}`,
           );
         }
       }),

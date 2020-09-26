@@ -36,6 +36,13 @@ Array.prototype.uniq = function() {
   return [...new Set(this)];
 };
 
+Array.prototype.uniqBy = function(iteratee) {
+  return this.filter(
+    (val, ind, self) =>
+      self.findIndex((val2) => iteratee(val2) === iteratee(val)) === ind,
+  );
+};
+
 interface FetchLatestEntriesResponse {
   [label: string]: {
     status: 'OK' | 'FAILURE';
@@ -100,8 +107,8 @@ const parseEntries = async (params: ParseEntriesInput) => {
   const previousSourceDynamoEntries = await batchGetDynamoItems<DynamoEntryRow>(
     {
       tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-      keyName: 'id',
-      valuesToFind: targetDynamoEntries.map((e) => e.mappedTo),
+      hashKeyName: 'id',
+      valuesToFind: targetDynamoEntries.map((e) => ({ hashKey: e.mappedTo })),
     },
   );
 
@@ -175,8 +182,8 @@ export const fetchLatestEntries = async (
               [sourceTogglEntries, targetTogglEntries].map(async (entries) =>
                 batchGetDynamoItems<DynamoEntryRow>({
                   tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-                  keyName: 'id',
-                  valuesToFind: entries.map((e) => String(e.id)),
+                  hashKeyName: 'id',
+                  valuesToFind: entries.map((e) => ({ hashKey: String(e.id) })),
                 }),
               ),
             );
@@ -195,25 +202,33 @@ export const fetchLatestEntries = async (
             });
 
             // Workspace IDs for all required entries
-            const workspaceIds = [...entriesToCreateRaw, ...entriesToModifyRaw]
-              .map((a) => String(a.wid))
-              .uniq();
+            const spaceIds = [...entriesToCreateRaw, ...entriesToModifyRaw]
+              .flatMap((a) => [
+                {
+                  wid: String(a.wid),
+                  pid: a.pid ? String(a.pid) : '*',
+                },
+                {
+                  wid: String(a.wid),
+                  pid: '*',
+                },
+              ])
+              .uniqBy(({ wid, pid }) => `${wid}${pid}`);
 
             // Entry mappings for workspace IDs
             const entryMappings = await batchGetDynamoItems<DynamoMapRow>({
               tableName: process.env.DYNAMO_MAPPING_TABLE_NAME,
-              keyName: 'sourceWid',
-              valuesToFind: workspaceIds,
+              hashKeyName: 'sourceWid',
+              rangeKeyName: 'sourcePid',
+              valuesToFind: spaceIds.map(({ wid, pid }) => ({
+                hashKey: wid,
+                rangeKey: pid,
+              })),
             });
-
-            const isValidRequest = (
-              val: TimeEntryRequest | any,
-            ): val is TimeEntryRequest =>
-              !!(val as TimeEntryRequest).created_with;
 
             const entriesToCreate = entriesToCreateRaw
               .map((e) => mapEntryForRequest(e, entryMappings))
-              .filter(isValidRequest);
+              .filter((e) => e !== null) as TimeEntryRequest[];
 
             const entriesToModify = entriesToModifyRaw.reduce<
               Record<string, TimeEntryRequest>
@@ -227,7 +242,7 @@ export const fetchLatestEntries = async (
 
             const entriesToDelete = entriesToDeleteRaw.map((e) => e.id);
 
-            // Create / update / modify entries
+            // Send requests to Toggl
             // Write dynamoDB rows
 
             return {
@@ -264,26 +279,6 @@ export const fetchLatestEntries = async (
     );
 
     return successResponse(response);
-
-    // Get mapping from dynamo DB and filter
-    // 1. fetch mapping for source entries
-    // 2. override
-
-    // Get entries from dynamo and decide case
-    // 1. sourceEntries -- check if exists
-    //    if exists:
-    //        check if has been modified (updatedAt in toggl > updatedAt in dynamo)
-    //        if modified:
-    //          CASE - UPDATE
-    //        else:
-    //          CASE - SKIP
-    //    else:
-    //      CASE - CREATE
-    // 2. targetEntries -- check if exists
-    //    if exists:
-    //       CASE - SKIP
-    //    else:
-    //       CASE - DELETE
   } catch (err) {
     return errorResponse(err);
   }

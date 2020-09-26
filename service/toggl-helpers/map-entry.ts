@@ -31,7 +31,7 @@ export const mapEntryForRequest = (
   if (
     mappingRow.overrides &&
     mappingRow.overrides.tags &&
-    Array.isArray(mappingRow.overrides.tags)
+    !Array.isArray(mappingRow.overrides.tags)
   ) {
     throw new ConfigurationError('Tags should be an array');
   }
