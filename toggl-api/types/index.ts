@@ -7,10 +7,23 @@ export type TypedResponse<T extends object | {} = {}> = Omit<
   json: () => Promise<T>;
 };
 
+export type ErrorResponse = {
+  error: true;
+  statusCode: number;
+  statusText: string;
+};
+
+export type ApiCallSuccessResponse<T> = { data: T; error: null };
+export type ApiCallErrorResponse = { data: null; error: ErrorResponse };
+
+export type ApiCallResponse<T> =
+  | ApiCallSuccessResponse<T>
+  | ApiCallErrorResponse;
+
 export type ApiCall = {
-  get: <T = {}>(endpoint: string) => Promise<T>;
-  post: <T, U = {}>(endpoint: string, body: U) => Promise<T>;
-  getMultiple: <T = {}>(endpoint: string) => Promise<T[]>;
+  get: <T = {}>(endpoint: string) => Promise<ApiCallResponse<T>>;
+  post: <T, U = {}>(endpoint: string, body: U) => Promise<ApiCallResponse<T>>;
+  getMultiple: <T = {}>(endpoint: string) => Promise<ApiCallResponse<T[]>>;
 };
 
 export type ApiMethod<T, U extends any[]> = (

@@ -1,23 +1,55 @@
 import fetch from 'node-fetch';
-import { ApiCall, TypedResponse, ApiMethod } from './types';
+import { ConfigurationError } from 'service/errors';
+
+import {
+  ApiCall,
+  TypedResponse,
+  ApiMethod,
+  ErrorResponse,
+  ApiCallErrorResponse,
+  ApiCallSuccessResponse,
+} from './types';
 
 type TogglWrapper<T> = {
   data: T;
 };
 
-const handleResponse = <T>(resp: TypedResponse<T>) => {
+const handleResponse = <T>(
+  resp: TypedResponse<T>,
+): Promise<T | ErrorResponse> => {
   switch (resp.status) {
     case 200:
       return resp.json();
     default:
-      console.log(resp);
-      throw new Error(`Received status code ${resp.status}`);
+      return Promise.resolve({
+        error: true,
+        statusCode: resp.status,
+        statusText: resp.statusText,
+      });
   }
+};
+
+const isResponseError = (resp: any | ErrorResponse): resp is ErrorResponse =>
+  !!(resp as ErrorResponse).error;
+
+const isResponseWrapped = <T>(
+  resp: T | TogglWrapper<T>,
+): resp is TogglWrapper<T> => !!(resp as TogglWrapper<T>).data;
+
+const mapResponse = <T>(
+  response: ErrorResponse | TogglWrapper<T> | T,
+): ApiCallErrorResponse | ApiCallSuccessResponse<T> => {
+  return isResponseError(response)
+    ? { error: response, data: null }
+    : {
+        data: isResponseWrapped(response) ? response.data : response,
+        error: null,
+      };
 };
 
 const constructApi = (togglApiToken: string): ApiCall => {
   if (!togglApiToken) {
-    throw new Error('No API token given!');
+    throw new ConfigurationError('No Toggl API token given!');
   }
 
   const headers = {
@@ -33,12 +65,14 @@ const constructApi = (togglApiToken: string): ApiCall => {
         method: 'GET',
       }) as Promise<TypedResponse<TogglWrapper<T>>>)
         .then(handleResponse)
-        .then((data) => data.data),
+        .then(mapResponse),
     getMultiple: <T>(endpoint: string) =>
       (fetch(endpoint, {
         headers,
         method: 'GET',
-      }) as Promise<TypedResponse<T[]>>).then(handleResponse),
+      }) as Promise<TypedResponse<T[]>>)
+        .then(handleResponse)
+        .then(mapResponse),
     post: <T, U>(endpoint: string, body: U) =>
       (fetch(endpoint, {
         headers,
@@ -46,7 +80,7 @@ const constructApi = (togglApiToken: string): ApiCall => {
         method: 'POST',
       }) as Promise<TypedResponse<TogglWrapper<T>>>)
         .then(handleResponse)
-        .then((data) => data.data),
+        .then(mapResponse),
   };
 };
 
