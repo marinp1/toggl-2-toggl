@@ -1,13 +1,17 @@
 export type DynamoSingleValue = string | number | boolean | null;
 
-export interface DynamoMapValue {
-  [x: string]: DynamoSingleValue | DynamoMapValue | DynamoArrayValue;
-}
+export type DynamoMapValue<T extends Record<string, any> = {}> = {
+  readonly [x in keyof T]: T[x] extends object
+    ? DynamoMapValue<T[x]>
+    : T[x] extends any[]
+    ? DynamoArrayValue<T[x]>
+    : T[x];
+};
 
-export interface DynamoArrayValue
-  extends Array<DynamoArrayValue | DynamoSingleValue | DynamoMapValue> {}
+export interface DynamoArrayValue<T>
+  extends Array<DynamoArrayValue<T> | DynamoSingleValue | DynamoMapValue<T>> {}
 
-export type DynamoValueType =
+export type DynamoValueType<T extends object = {}> =
   | DynamoSingleValue
-  | DynamoMapValue
-  | DynamoArrayValue;
+  | DynamoMapValue<T>
+  | DynamoArrayValue<T>;

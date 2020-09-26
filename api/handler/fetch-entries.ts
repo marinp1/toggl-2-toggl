@@ -4,10 +4,30 @@ import {
   getSSMParameters,
   fetchLatestTogglEntries,
   queryDynamoTableGSI,
+  batchGetDynamoItems,
 } from 'service';
 
-import { LambdaEvent, LambdaResponse, DynamoTaskRow } from 'service/types';
+import {
+  LambdaEvent,
+  LambdaResponse,
+  DynamoTaskRow,
+  DynamoEntryRow,
+} from 'service/types';
 import { TimeEntryResponse } from 'toggl-api/types';
+
+Array.prototype.intersectBy = function(arr, iteratee) {
+  const setA = new Set(this.map(iteratee));
+  const setB = new Set(arr.map(iteratee));
+  const intersectionList = new Set([...setA].filter((x) => setB.has(x)));
+  return this.filter((x) => intersectionList.has(iteratee(x)));
+};
+
+Array.prototype.differenceBy = function(arr, iteratee) {
+  const setA = new Set(this.map(iteratee));
+  const setB = new Set(arr.map(iteratee));
+  const intersectionList = new Set([...setA].filter((x) => setB.has(x)));
+  return this.filter((x) => !intersectionList.has(iteratee(x)));
+};
 
 interface FetchLatestEntriesResponse {
   [label: string]: {
@@ -15,7 +35,7 @@ interface FetchLatestEntriesResponse {
     error?: string;
     existingEntries?: TimeEntryResponse[];
     newEntries?: TimeEntryResponse[];
-    deletedEntries?: TimeEntryResponse[];
+    deletedEntries?: DynamoEntryRow[];
   };
 }
 
@@ -26,25 +46,9 @@ const parseEntries = async ({
   const iteratee = ({ start, duration }: TimeEntryResponse) =>
     `${start}${duration}`;
 
-  const sourceList = new Set(sourceEntries.map(iteratee));
-  const targetList = new Set(targetEntries.map(iteratee));
-  const intersectionList = new Set(
-    [...sourceList].filter((x) => targetList.has(x)),
-  );
-
-  const [newEntries, deletedEntries, existingEntries] = await Promise.all([
-    Promise.resolve(
-      sourceEntries.filter((x) => !intersectionList.has(iteratee(x))),
-    ),
-    Promise.resolve(
-      targetEntries.filter((x) => !intersectionList.has(iteratee(x))),
-    ),
-    Promise.resolve(
-      [...sourceEntries, ...targetEntries].filter((x) =>
-        intersectionList.has(iteratee(x)),
-      ),
-    ),
-  ]);
+  const existingEntries = sourceEntries.intersectBy(targetEntries, iteratee);
+  const newEntries = sourceEntries.differenceBy(existingEntries, iteratee);
+  const deletedEntries = targetEntries.differenceBy(existingEntries, iteratee);
 
   return {
     existingEntries,
@@ -96,13 +100,42 @@ export const fetchLatestEntries = async (
               ),
             );
 
+            const [
+              sourceDynamoEntries,
+              targetDynamoEntries,
+            ] = await Promise.all(
+              [sourceEntries, targetEntries].map(async (entries) =>
+                batchGetDynamoItems<DynamoEntryRow>({
+                  tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
+                  keyName: 'guid',
+                  valuesToFind: entries.map((e) => e.guid),
+                }),
+              ),
+            );
+
+            const dynamoIteratee = (val: { guid: string }) => val.guid;
+
+            const createdEntries = sourceEntries.differenceBy(
+              sourceDynamoEntries,
+              dynamoIteratee,
+            );
+
+            const modifiedEntries = sourceEntries.intersectBy(
+              sourceDynamoEntries,
+              dynamoIteratee,
+            );
+
+            const deletedEntries = sourceDynamoEntries.differenceBy(
+              sourceEntries,
+              dynamoIteratee,
+            );
+
             return {
               [label]: {
                 status: 'OK',
-                ...(await parseEntries({
-                  sourceEntries: sourceEntries,
-                  targetEntries: targetEntries,
-                })),
+                newEntries: createdEntries,
+                modifiedEntries,
+                deletedEntries,
               },
             };
           } catch (e) {

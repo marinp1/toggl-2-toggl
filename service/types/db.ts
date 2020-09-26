@@ -1,6 +1,6 @@
 import { DynamoMapValue } from './dynamo';
 
-export interface DynamoMapRow extends DynamoMapValue {
+export type DynamoMapRow = DynamoMapValue<{
   label: string;
   sourceWid: string; // * for wildcard;
   sourcePid: string; // * for wildcard;
@@ -11,18 +11,18 @@ export interface DynamoMapRow extends DynamoMapValue {
     labels: string[] | null;
     description: string | null;
   } | null;
-}
+}>;
 
-export interface DynamoEntryRow extends DynamoMapValue {
+export type DynamoEntryRow = DynamoMapValue<{
   type: 'source-entry' | 'target-entry';
   guid: string; // guid
   lastUpdated: string;
   mappedTo: string | null; // guid
-}
+}>;
 
-export interface DynamoTaskRow extends DynamoMapValue {
+export type DynamoTaskRow = DynamoMapValue<{
   label: string;
   sourceApiKeySSMRef: string;
   targetApiKeySSMRef: string;
   active: number; // 1 active, 0 inactive
-}
+}>;

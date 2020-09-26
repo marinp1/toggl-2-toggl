@@ -1,5 +1,5 @@
 import { AttributeValue, AttributeMap } from 'aws-sdk/clients/dynamodb';
-import { DynamoSingleValue, DynamoValueType } from '../types';
+import { DynamoSingleValue, DynamoValueType } from '../../types';
 
 export const valueToAttributeValue = (
   val: DynamoSingleValue,

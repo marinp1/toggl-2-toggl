@@ -18,5 +18,13 @@ declare global {
   }
   export interface Array<T> {
     join<T>(separator?: T): Stringified<T>;
+    intersectBy<U>(
+      arr: U[],
+      iteratee: (value: Record<Extract<keyof U, keyof T>, any>) => string,
+    ): T[];
+    differenceBy<U>(
+      arr: U[],
+      iteratee: (value: Record<Extract<keyof U, keyof T>, any>) => string,
+    ): T[];
   }
 }

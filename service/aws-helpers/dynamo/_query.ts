@@ -3,7 +3,7 @@ import { getDynamoClient } from './getDynamoClient';
 
 import { valueToAttributeValue, parseDynamoItem } from './dynamoValueMappers';
 
-import { DynamoSingleValue, DynamoMapValue } from '../types';
+import { DynamoSingleValue } from '../../types';
 
 interface GSIQueryParams<T> {
   tableName: string | undefined;
@@ -11,9 +11,7 @@ interface GSIQueryParams<T> {
   valueToFind: DynamoSingleValue;
 }
 
-export const queryDynamoTableGSI = async <
-  ResponseItemType extends DynamoMapValue = {}
->(
+export const queryDynamoTableGSI = async <ResponseItemType>(
   params: GSIQueryParams<keyof ResponseItemType>,
 ): Promise<ResponseItemType[]> => {
   const { tableName, gsiName, valueToFind } = params;
