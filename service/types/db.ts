@@ -8,7 +8,7 @@ export interface DynamoMapRow extends DynamoMapValue {
   targetPid: string | null;
   overrides: {
     billable: boolean | null;
-    labels: string[];
+    labels: string[] | null;
     description: string | null;
   } | null;
 }
