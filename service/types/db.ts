@@ -17,7 +17,7 @@ export type DynamoEntryRow = DynamoMapValue<{
   type: 'source-entry' | 'target-entry';
   guid: string; // guid
   lastUpdated: string;
-  mappedTo: string | null; // guid
+  mappedTo: string; // guid
 }>;
 
 export type DynamoTaskRow = DynamoMapValue<{

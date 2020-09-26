@@ -39,21 +39,76 @@ interface FetchLatestEntriesResponse {
   };
 }
 
-const parseEntries = async ({
-  sourceEntries,
-  targetEntries,
-}: Record<'sourceEntries' | 'targetEntries', TimeEntryResponse[]>) => {
-  const iteratee = ({ start, duration }: TimeEntryResponse) =>
-    `${start}${duration}`;
+interface ParseEntriesInput {
+  sourceTogglEntries: TimeEntryResponse[];
+  targetTogglEntries: TimeEntryResponse[];
+  sourceDynamoEntries: DynamoEntryRow[];
+  targetDynamoEntries: DynamoEntryRow[];
+}
 
-  const existingEntries = sourceEntries.intersectBy(targetEntries, iteratee);
-  const newEntries = sourceEntries.differenceBy(existingEntries, iteratee);
-  const deletedEntries = targetEntries.differenceBy(existingEntries, iteratee);
+const parseEntries = async (params: ParseEntriesInput) => {
+  const {
+    sourceTogglEntries,
+    targetTogglEntries,
+    sourceDynamoEntries,
+    targetDynamoEntries,
+  } = params;
+
+  const dynamoIteratee = (val: { guid: string }) => val.guid;
+
+  const togglIteratee = (val: Pick<TimeEntryResponse, 'duration' | 'start'>) =>
+    `${val.duration}${val.start}`;
+
+  // Time entries that exist in Toggl but are not processed
+  // i.e. exist in Toggl but not in Dynamo
+  const unprocessedEntries = sourceTogglEntries.differenceBy(
+    sourceDynamoEntries,
+    dynamoIteratee,
+  );
+
+  // Time entries that were created, i.e.
+  // Do not have a match in target Toggl
+  const newEntries = unprocessedEntries.differenceBy(
+    targetTogglEntries,
+    togglIteratee,
+  );
+
+  // Time entries that exist in Toggl and are already processed
+  // Either skip or modify these entries
+  const existingEntries = sourceTogglEntries.intersectBy(
+    sourceDynamoEntries,
+    dynamoIteratee,
+  );
+
+  // If the entry in Toggl was updated after last sync,
+  // mark the entry to be modified
+  const modifiedEntries = existingEntries.filter(
+    (te) =>
+      sourceDynamoEntries.find((de) => de.guid === te.guid)!.lastUpdated <
+      te.at,
+  );
+
+  // Fetch mapped DynamoDB entries for the Toggl entries that were
+  // found from target account.
+  const previousSourceDynamoEntries = await batchGetDynamoItems<DynamoEntryRow>(
+    {
+      tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
+      keyName: 'guid',
+      valuesToFind: targetDynamoEntries.map((e) => e.mappedTo),
+    },
+  );
+
+  // If the entry is removed from source account, this means
+  // that these entries should not be found from current source Toggl entries.
+  const deletedEntries = previousSourceDynamoEntries.differenceBy(
+    sourceTogglEntries,
+    dynamoIteratee,
+  );
 
   return {
-    existingEntries,
-    newEntries,
-    deletedEntries,
+    entriesToCreateRaw: newEntries,
+    entriesToDeleteRaw: deletedEntries,
+    entriesToModifyRaw: modifiedEntries,
   };
 };
 
@@ -84,12 +139,16 @@ export const fetchLatestEntries = async (
       Object.entries(activeProcesses).map<Promise<FetchLatestEntriesResponse>>(
         async ([label, { sourceApiKeySSMRef, targetApiKeySSMRef }]) => {
           try {
+            // Get decoded SSM parameters for source and target
+            // i.e. api token for Toggl
             const ssmValues = await getSSMParameters(
               sourceApiKeySSMRef,
               targetApiKeySSMRef,
             );
 
-            const [sourceEntries, targetEntries] = await Promise.all(
+            // Get Toggl time entries from last three days for both
+            // source and target account
+            const [sourceTogglEntries, targetTogglEntries] = await Promise.all(
               [sourceApiKeySSMRef, targetApiKeySSMRef].map(async (ssmName) =>
                 (
                   await fetchLatestTogglEntries({
@@ -100,11 +159,13 @@ export const fetchLatestEntries = async (
               ),
             );
 
+            // Get matching DynamoDB entries for entries received from Toggl
+            // i.e. DynamoDB row guid matches Toggl time entry guid
             const [
               sourceDynamoEntries,
               targetDynamoEntries,
             ] = await Promise.all(
-              [sourceEntries, targetEntries].map(async (entries) =>
+              [sourceTogglEntries, targetTogglEntries].map(async (entries) =>
                 batchGetDynamoItems<DynamoEntryRow>({
                   tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
                   keyName: 'guid',
@@ -113,35 +174,27 @@ export const fetchLatestEntries = async (
               ),
             );
 
-            const dynamoIteratee = (val: { guid: string }) => val.guid;
-
-            const createdEntries = sourceEntries.differenceBy(
+            // Raw parsed values
+            // i.e. no mapping applied
+            const {
+              entriesToCreateRaw,
+              entriesToDeleteRaw,
+              entriesToModifyRaw,
+            } = await parseEntries({
+              sourceTogglEntries,
+              targetTogglEntries,
               sourceDynamoEntries,
-              dynamoIteratee,
-            );
+              targetDynamoEntries,
+            });
 
-            const existingEntries = sourceEntries.intersectBy(
-              sourceDynamoEntries,
-              dynamoIteratee,
-            );
-
-            const modifiedEntries = existingEntries.filter(
-              (te) =>
-                sourceDynamoEntries.find((de) => de.guid === te.guid)!
-                  .lastUpdated < te.at,
-            );
-
-            const deletedEntries = sourceDynamoEntries.differenceBy(
-              sourceEntries,
-              dynamoIteratee,
-            );
+            // Fetch mapping
 
             return {
               [label]: {
                 status: 'OK',
-                newEntries: createdEntries,
-                modifiedEntries,
-                deletedEntries,
+                newEntries: entriesToCreateRaw,
+                modifiedEntries: entriesToModifyRaw,
+                deletedEntries: entriesToDeleteRaw,
               },
             };
           } catch (e) {
