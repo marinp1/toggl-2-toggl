@@ -16,7 +16,7 @@ metrics:
         method: GET
         private: true
 
-latest:
+sync:
   handler: handler/sync-entries.syncEntries
   description: syncronise entries between accounts
   timeout: 10
