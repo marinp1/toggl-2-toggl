@@ -1,6 +1,4 @@
 service: toggl-sync
-app: toggl-sync
-org: marinp1
 
 package:
   individually: true
