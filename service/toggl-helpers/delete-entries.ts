@@ -10,16 +10,18 @@ const isRejected = <T>(
 
 export const deleteEntries = async (params: {
   apiToken: string;
-  entryIds: string[];
+  requests: Record<string, string>;
 }): Promise<{
   successes: string[];
   failures: string[];
 }> => {
-  const { apiToken, entryIds } = params;
+  const { apiToken, requests } = params;
   const preparedDeleteEntry = prepareApi(deleteEntry, apiToken);
 
   const deletePromises = await Promise.allSettled(
-    entryIds.map((entryId) => preparedDeleteEntry(entryId)),
+    Object.entries(requests).map(([entryId, mappedEntryId]) =>
+      preparedDeleteEntry(entryId, mappedEntryId),
+    ),
   );
 
   const successes = deletePromises.filter(isFulfilled).map((p) => p.value);

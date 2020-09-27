@@ -47,7 +47,7 @@ interface SuccessResponse {
     input: {
       entriesToModify: Record<string, TimeEntryRequest | null>;
       entriesToCreate: Record<string, TimeEntryRequest | null>;
-      entriesToDelete: string[];
+      entriesToDelete: Record<string, string>;
     };
     output: any;
     debug: {
@@ -207,7 +207,15 @@ export const syncEntries = async (
               {},
             );
 
-            const entriesToDelete = entriesToDeleteRaw.map((e) => e.mappedTo);
+            const entriesToDelete = entriesToDeleteRaw.reduce<
+              Record<string, string>
+            >(
+              (acc, e) => ({
+                ...acc,
+                [e.id]: e.mappedTo,
+              }),
+              {},
+            );
 
             // Send results to target API
             const targetApiToken = ssmValues[targetApiKeySSMRef];
@@ -215,7 +223,7 @@ export const syncEntries = async (
             // 1. Delete entries
             const deleteResults = await deleteEntries({
               apiToken: targetApiToken,
-              entryIds: entriesToDelete,
+              requests: entriesToDelete,
             });
 
             // 2. Modify entries
