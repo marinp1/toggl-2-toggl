@@ -1,8 +1,8 @@
 # toggl-task-sync
 
-[![Actions Status](https://github.com/marinp1/toggl-2-toggl/workflows/Deploy%20to%20AWS/badge.svg)](https://github.com/marinp1/toggl-2-toggl/ad/actions)
+[![Actions Status](https://github.com/marinp1/toggl-2-toggl/workflows/Deploy%20to%20AWS/badge.svg)](https://github.com/marinp1/toggl-2-toggl/actions)
 
-Synchronise Toggl time entries between two Toggl accounts.
+Synchronise Toggl time entries between two or more Toggl accounts.
 
 Supports entry creation, modification and deletion with configuration options.
 
@@ -14,7 +14,7 @@ curl --request POST \
   --header 'x-api-key: {{API-KEY}}'
 ```
 
-Response contains a record of tasks and statuses.
+Response contains a record of tasks and their statuses.
 
 ## Why
 
@@ -103,6 +103,6 @@ npx serverless deploy --stage {{ENV}}
 
 - For safety, new source entries are skipped if target account already contains an entry with same start time and duration and it was not marked as a modified entry
 - Synchronisation interval cannot be changed
-- Having more than one active deployments can cause uninteded side-effects
+- Having more than one running deployments with same tasks can cause uninteded side-effects (not tested)
 - Deletion and modification works only for tasks that were created with this tool
-- CI / CD environment is only enabled for prod.
+- CI / CD environment is only enabled for prod
