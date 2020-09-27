@@ -19,7 +19,6 @@
   },
   "homepage": "https://github.com/marinp1/toggl-2-toggl#readme",
   "devDependencies": {
-    "serverless-offline": "^6.8.0",
     "webpack": "^5.0.0-rc.0"
   },
   "dependencies": {
