@@ -29,6 +29,23 @@ const handleResponse = <T>(
   }
 };
 
+const handlePlainResponse = (
+  resp: TypedResponse<{}>,
+): Promise<{ statusCode: number } | ErrorResponse> => {
+  switch (resp.status) {
+    case 200:
+      return Promise.resolve({
+        statusCode: resp.status,
+      });
+    default:
+      return Promise.resolve({
+        error: true,
+        statusCode: resp.status,
+        statusText: resp.statusText,
+      });
+  }
+};
+
 const isResponseError = (resp: any | ErrorResponse): resp is ErrorResponse =>
   !!(resp as ErrorResponse).error;
 
@@ -80,6 +97,21 @@ const constructApi = (togglApiToken: string): ApiCall => {
         method: 'POST',
       }) as Promise<TypedResponse<TogglWrapper<T>>>)
         .then(handleResponse)
+        .then(mapResponse),
+    put: <T, U>(endpoint: string, body: U) =>
+      (fetch(endpoint, {
+        headers,
+        body: JSON.stringify(body) as string,
+        method: 'PUT',
+      }) as Promise<TypedResponse<TogglWrapper<T>>>)
+        .then(handleResponse)
+        .then(mapResponse),
+    delete: (endpoint: string) =>
+      (fetch(endpoint, {
+        headers,
+        method: 'DELETE',
+      }) as Promise<TypedResponse<{}>>)
+        .then(handlePlainResponse)
         .then(mapResponse),
   };
 };

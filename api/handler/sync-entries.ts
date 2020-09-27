@@ -8,6 +8,9 @@ import {
   fetchLatestTogglEntries,
   mapEntryForRequest,
   parseEntries,
+  deleteEntries,
+  modifyEntries,
+  createEntries,
 } from 'service/toggl-helpers';
 
 import { successResponse, errorResponse } from 'service/lambda-helpers';
@@ -24,6 +27,8 @@ import {
   DynamoTaskRow,
   DynamoEntryRow,
   DynamoMapRow,
+  EnrichedTimeEntryResponse,
+  EnrichedWithMap,
 } from 'service/types';
 
 import { TimeEntryResponse, TimeEntryRequest } from 'toggl-api/types';
@@ -38,15 +43,16 @@ interface FailureResponse {
 interface SuccessResponse {
   [label: string]: {
     status: 'OK';
-    output: {
-      entriesToModify: Record<string, TimeEntryRequest>;
-      entriesToCreate: TimeEntryRequest[];
+    input: {
+      entriesToModify: Record<string, TimeEntryRequest | null>;
+      entriesToCreate: Record<string, TimeEntryRequest | null>;
       entriesToDelete: string[];
     };
+    output: any;
     debug: {
       entryMappings: any;
-      modifiedEntries: TimeEntryResponse[];
-      createdEntries: TimeEntryResponse[];
+      modifiedEntries: EnrichedTimeEntryResponse[];
+      createdEntries: EnrichedTimeEntryResponse[];
       deletedEntries: DynamoEntryRow[];
     };
   };
@@ -158,21 +164,54 @@ export const syncEntries = async (
               })),
             });
 
-            const entriesToCreate = entriesToCreateRaw
-              .map((e) => mapEntryForRequest(e, entryMappings))
-              .filter((e) => e !== null) as TimeEntryRequest[];
-
-            const entriesToModify = entriesToModifyRaw.reduce<
-              Record<string, TimeEntryRequest>
+            const entriesToCreate = entriesToCreateRaw.reduce<
+              Record<string, TimeEntryRequest | null>
             >(
               (acc, e) => ({
                 ...acc,
-                [e.id]: mapEntryForRequest(e, entryMappings),
+                [e.id]: mapEntryForRequest(e, entryMappings).entry,
+              }),
+              {},
+            );
+
+            const entriesToModify = entriesToModifyRaw.reduce<
+              Record<string, EnrichedWithMap<TimeEntryRequest> | null>
+            >(
+              (acc, e) => ({
+                ...acc,
+                [e.id]: (() => {
+                  const mapping = mapEntryForRequest(e, entryMappings);
+                  return {
+                    ...mapping,
+                    __mappedTo: String(mapping.__original.__mappedTo),
+                  };
+                })(),
               }),
               {},
             );
 
             const entriesToDelete = entriesToDeleteRaw.map((e) => e.id);
+
+            // Send results to target API
+            const targetApiToken = ssmValues[targetApiKeySSMRef];
+
+            // 1. Delete entries
+            const deleteResults = await deleteEntries({
+              apiToken: targetApiToken,
+              entryIds: entriesToDelete,
+            });
+
+            // 2. Modify entries
+            const modifyResults = await modifyEntries({
+              apiToken: targetApiToken,
+              requests: entriesToModify,
+            });
+
+            // 3. Create entries
+            const createResults = await createEntries({
+              apiToken: targetApiToken,
+              requests: entriesToCreate,
+            });
 
             // Send requests to Toggl
             // Write dynamoDB rows
@@ -180,10 +219,15 @@ export const syncEntries = async (
             return {
               [label]: {
                 status: 'OK',
-                output: {
+                input: {
                   entriesToCreate,
                   entriesToModify,
                   entriesToDelete,
+                },
+                output: {
+                  deleteResults,
+                  modifyResults,
+                  createResults,
                 },
                 debug: {
                   entryMappings,

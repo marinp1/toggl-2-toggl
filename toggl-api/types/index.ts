@@ -22,6 +22,10 @@ export type ApiCallResponse<T> =
 
 export type ApiCall = {
   get: <T = {}>(endpoint: string) => Promise<ApiCallResponse<T>>;
+  delete: (
+    endpoint: string,
+  ) => Promise<ApiCallResponse<{ statusCode: number }>>;
+  put: <T, U = {}>(endpoint: string, body: U) => Promise<ApiCallResponse<T>>;
   post: <T, U = {}>(endpoint: string, body: U) => Promise<ApiCallResponse<T>>;
   getMultiple: <T = {}>(endpoint: string) => Promise<ApiCallResponse<T[]>>;
 };

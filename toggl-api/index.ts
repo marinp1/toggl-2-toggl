@@ -1,2 +1,8 @@
-export { getLatest } from './time-entries';
+export {
+  getLatest,
+  deleteEntry,
+  createEntry,
+  updateEntry,
+} from './time-entries';
+
 export { prepareApi } from './prepare-api';

@@ -1,11 +1,15 @@
-import { TimeEntryResponse, TimeEntryRequest } from 'toggl-api/types';
-import { DynamoMapRow } from '../types';
 import { ConfigurationError } from '../errors';
 
+import {
+  EnrichedTimeEntryResponse,
+  TogglEntryRequest,
+  DynamoMapRow,
+} from '../types';
+
 export const mapEntryForRequest = (
-  entry: TimeEntryResponse,
+  entry: EnrichedTimeEntryResponse,
   entryMappings: DynamoMapRow[],
-): TimeEntryRequest | null => {
+): TogglEntryRequest => {
   // Unique mapping row
   const mappingRow = entryMappings.find(
     (row) =>
@@ -14,7 +18,7 @@ export const mapEntryForRequest = (
   );
 
   // If row was not found, return null
-  if (!mappingRow) return null;
+  if (!mappingRow) return { __original: entry, entry: null };
 
   if (!mappingRow.targetWid) {
     throw new ConfigurationError('Target workspace ID not given');
@@ -29,16 +33,20 @@ export const mapEntryForRequest = (
   }
 
   return {
-    created_with: 'toggl-sync-app',
-    wid: Number(mappingRow.targetWid),
-    pid: mappingRow.targetPid ? Number(mappingRow.targetPid) : undefined,
-    billable: (mappingRow.overrides && mappingRow.overrides.billable) || false,
-    tags: (mappingRow.overrides && mappingRow.overrides.tags) || [],
-    description:
-      (mappingRow.overrides && mappingRow.overrides.description) ||
-      entry.description,
-    start: entry.start,
-    stop: entry.stop,
-    duration: entry.duration,
+    entry: {
+      created_with: 'toggl-sync-app',
+      wid: Number(mappingRow.targetWid),
+      pid: mappingRow.targetPid ? Number(mappingRow.targetPid) : undefined,
+      billable:
+        (mappingRow.overrides && mappingRow.overrides.billable) || false,
+      tags: (mappingRow.overrides && mappingRow.overrides.tags) || [],
+      description:
+        (mappingRow.overrides && mappingRow.overrides.description) ||
+        entry.description,
+      start: entry.start,
+      stop: entry.stop,
+      duration: entry.duration,
+    },
+    __original: entry,
   };
 };

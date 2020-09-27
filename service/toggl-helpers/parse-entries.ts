@@ -45,11 +45,23 @@ export const parseEntries = async (params: ParseEntriesInput) => {
 
   // If the entry in Toggl was updated after last sync,
   // mark the entry to be modified
-  const modifiedEntries = existingEntries.filter(
-    (te) =>
-      sourceDynamoEntries.find((de) => String(de.id) === String(te.id))!
-        .lastUpdated < te.at,
-  );
+  const modifiedEntries = existingEntries
+    .filter((te) => {
+      const mappedEntry = sourceDynamoEntries.find(
+        (de) => String(de.id) === String(te.id),
+      );
+      return mappedEntry && mappedEntry.lastUpdated < te.at;
+    })
+    // Enrich result with mappedTo value from database
+    .map((te) => {
+      const mappedEntry = sourceDynamoEntries.find(
+        (de) => String(de.id) === String(te.id),
+      );
+      return {
+        ...te,
+        __mappedTo: mappedEntry ? mappedEntry.mappedTo : 'not-set',
+      };
+    });
 
   // Fetch mapped DynamoDB entries for the Toggl entries that were
   // found from target account.
