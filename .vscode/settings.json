@@ -1,7 +1,6 @@
 {
   "files.insertFinalNewline": true,
   "editor.formatOnSave": true,
-  "eslint.autoFixOnSave": true,
   "prettier.trailingComma": "all",
   "prettier.singleQuote": true,
   "[javascript]": {
@@ -16,19 +15,7 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    {
-      "autoFix": true,
-      "language": "typescript"
-    },
-    {
-      "autoFix": true,
-      "language": "typescriptreact"
-    }
-  ],
-  "eslint.workingDirectories": [
-    { "directory": "./codebase", "changeProcessCWD": true }
-  ]
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
 }

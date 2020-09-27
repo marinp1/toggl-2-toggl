@@ -1,0 +1,22 @@
+{
+  "name": "service",
+  "version": "1.0.0",
+  "private": true,
+  "module": "true",
+  "description": "",
+  "sideEffects": false,
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "date-fns": "^2.16.1",
+    "lodash-es": "^4.17.15"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.3",
+    "aws-sdk": "^2.760.0"
+  }
+}

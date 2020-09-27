@@ -1,0 +1,49 @@
+PolicyName: DynamoDBFullAccess
+PolicyDocument:
+  Version: '2012-10-17'
+  Statement:
+    - Effect: Allow
+      Action:
+        - 'dynamodb:BatchGetItem'
+        - 'dynamodb:BatchWriteItem'
+        - 'dynamodb:Query'
+      Resource:
+        - Fn::Join:
+            - ''
+            - - 'arn:aws:dynamodb:${self:provider.region}:'
+              - Ref: 'AWS::AccountId'
+              - ':table/'
+              - Ref: TogglEntriesTable
+        - Fn::Join:
+            - ''
+            - - 'arn:aws:dynamodb:${self:provider.region}:'
+              - Ref: 'AWS::AccountId'
+              - ':table/'
+              - Ref: TogglEntriesTable
+              - '/index/*'
+        - Fn::Join:
+            - ''
+            - - 'arn:aws:dynamodb:${self:provider.region}:'
+              - Ref: 'AWS::AccountId'
+              - ':table/'
+              - Ref: TogglMappingTable
+        - Fn::Join:
+            - ''
+            - - 'arn:aws:dynamodb:${self:provider.region}:'
+              - Ref: 'AWS::AccountId'
+              - ':table/'
+              - Ref: TogglMappingTable
+              - '/index/*'
+        - Fn::Join:
+            - ''
+            - - 'arn:aws:dynamodb:${self:provider.region}:'
+              - Ref: 'AWS::AccountId'
+              - ':table/'
+              - Ref: TogglTasksTable
+        - Fn::Join:
+            - ''
+            - - 'arn:aws:dynamodb:${self:provider.region}:'
+              - Ref: 'AWS::AccountId'
+              - ':table/'
+              - Ref: TogglTasksTable
+              - '/index/*'

@@ -1,0 +1,68 @@
+service: toggl-sync
+#app: toggl-2-toggl
+#org: marinp1
+
+package:
+  individually: true
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+  region: eu-central-1
+  stage: ${opt:stage}
+
+  role: LambdaRole
+
+  memorySize: 128
+  timeout: 5
+  versionFunctions: false
+
+  logRetentionInDays: 14
+
+  usagePlan:
+    quota:
+      limit: 2000
+      offset: 0
+      period: DAY
+    throttle:
+      burstLimit: 100
+      rateLimit: 50
+
+  environment:
+    APP_VERSION: ${file(../package.json):version}
+    APP_NAME: ${self:service}
+    APP_STAGE: ${self:provider.stage}
+    APP_REGION: ${self:provider.region}
+    DYNAMO_ENTRIES_TABLE_NAME: ${self:service}-${self:provider.stage}-Entries
+    DYNAMO_MAPPING_TABLE_NAME: ${self:service}-${self:provider.stage}-Mapping
+    DYNAMO_TASKS_TABLE_NAME: ${self:service}-${self:provider.stage}-Tasks
+
+  apiKeys:
+    - ${self:service}-${self:provider.stage}-apiKey
+
+  stackTags:
+    CostCentre: patrikmarin-apps
+    Environment: ${self:provider.stage}
+
+  tags:
+    CostCentre: patrikmarin-apps
+    Environment: ${self:provider.stage}
+
+functions:
+  - ${file(./serverless/functions.yml)}
+
+resources:
+  - ${file(./serverless/resources.yml)}
+
+custom:
+  webpack:
+    webpackConfig: '../webpack.config.js' # Name of webpack configuration file
+    includeModules: false
+    packager: 'yarn'
+  serverless-offline:
+    noAuth: true
+
+plugins:
+  - serverless-webpack
+  - serverless-offline

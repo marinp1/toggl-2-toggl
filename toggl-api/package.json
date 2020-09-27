@@ -1,0 +1,16 @@
+{
+  "name": "toggl-api",
+  "version": "1.0.0",
+  "sideEffects": false,
+  "description": "Module for Toggl REST API",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "node-fetch": "^2.6.1",
+    "service": "1.0.0"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.5.7"
+  }
+}

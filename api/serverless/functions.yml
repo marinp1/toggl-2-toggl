@@ -1,0 +1,28 @@
+ping:
+  handler: handler/ping.ping
+  description: handler to check if service is available
+  events:
+    - http:
+        path: ping
+        method: GET
+        private: true
+
+metrics:
+  handler: handler/metrics.getMetrics
+  description: fetch current state and metrics
+  events:
+    - http:
+        path: metrics
+        method: GET
+        private: true
+
+sync:
+  handler: handler/sync-entries.syncEntries
+  description: syncronise entries between accounts
+  timeout: 10
+  events:
+    - http:
+        path: sync
+        method: POST
+        private: true
+    - schedule: rate(2 hours)

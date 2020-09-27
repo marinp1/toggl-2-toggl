@@ -65,3 +65,5 @@ env.yml
 .next
 
 /codebase/target
+
+node_modules
