@@ -182,7 +182,7 @@ export const syncEntries = async (
                 [e.id]: (() => {
                   const mapping = mapEntryForRequest(e, entryMappings);
                   return {
-                    ...mapping,
+                    ...mapping.entry,
                     __mappedTo: String(mapping.__original.__mappedTo),
                   };
                 })(),
