@@ -63,17 +63,25 @@ Overrides can be given in the following format (note, each one is optional):
 }
 ```
 
-## Limitations
-
-- For safety, new source entries are skipped if target account already contains an entry with same start time and duration and it was not marked as a modified entry
-- Synchronisation interval cannot be changed
-- Having more than one active deployments can cause uninteded side-effects
-- Deletion and modification works only for tasks that were created with this tool
-
 ## Development
 
 TODO
 
 ## Deployment
 
-TODO
+Continuous deployment is enabled on the `master` branch with a Github workflow, targeting production environment.
+
+Since workflow uses update stack template, an initial stack must be generated beforehand or Cloudformation creation fails. To do that, the following aws-cli command can be used:
+
+`aws cloudformation deploy --template-file ./.serverless/cloudformation-template-create-stack.json --stack-name toggl-sync-prod --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM --profile {{profilename}}`
+
+Workflow also requires Github secrets `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in order to deploy Cloudformation stacks.
+
+## Limitations
+
+- For safety, new source entries are skipped if target account already contains an entry with same start time and duration and it was not marked as a modified entry
+- Synchronisation interval cannot be changed
+- Having more than one active deployments can cause uninteded side-effects
+- Deletion and modification works only for tasks that were created with this tool
+- Initial Cloudformation stack must ne created manually
+- CI / CD environment is only enabled for prod.
