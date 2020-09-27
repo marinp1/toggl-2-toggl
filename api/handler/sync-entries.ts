@@ -113,18 +113,34 @@ export const syncEntries = async (
 
             // Get matching DynamoDB entries for entries received from Toggl
             // i.e. DynamoDB row id matches Toggl time entry id
+            const sourceDynamoEntriesPromise = batchGetDynamoItems<
+              DynamoEntryRow
+            >({
+              tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
+              hashKeyName: 'id',
+              valuesToFind: sourceTogglEntries.map((e) => ({
+                hashKey: String(e.id),
+              })),
+            });
+
+            // FIXME: Inefficient query
+            const targetDynamoEntriesPromise = Promise.all(
+              targetTogglEntries.map(async (te) =>
+                queryDynamoTableGSI<DynamoEntryRow>({
+                  tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
+                  gsiName: 'mappedTo',
+                  valueToFind: String(te.id),
+                }),
+              ),
+            ).then((res) => res.flat());
+
             const [
               sourceDynamoEntries,
               targetDynamoEntries,
-            ] = await Promise.all(
-              [sourceTogglEntries, targetTogglEntries].map(async (entries) =>
-                batchGetDynamoItems<DynamoEntryRow>({
-                  tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-                  hashKeyName: 'id',
-                  valuesToFind: entries.map((e) => ({ hashKey: String(e.id) })),
-                }),
-              ),
-            );
+            ] = await Promise.all([
+              sourceDynamoEntriesPromise,
+              targetDynamoEntriesPromise,
+            ]);
 
             // Raw parsed values
             // i.e. no mapping applied
@@ -190,7 +206,7 @@ export const syncEntries = async (
               {},
             );
 
-            const entriesToDelete = entriesToDeleteRaw.map((e) => e.id);
+            const entriesToDelete = entriesToDeleteRaw.map((e) => e.mappedTo);
 
             // Send results to target API
             const targetApiToken = ssmValues[targetApiKeySSMRef];

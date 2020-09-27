@@ -1,6 +1,5 @@
 import { TimeEntryResponse } from 'toggl-api/types';
 import { DynamoEntryRow } from '../types';
-import { batchGetDynamoItems } from '../aws-helpers';
 
 interface ParseEntriesInput {
   sourceTogglEntries: TimeEntryResponse[];
@@ -63,19 +62,9 @@ export const parseEntries = async (params: ParseEntriesInput) => {
       };
     });
 
-  // Fetch mapped DynamoDB entries for the Toggl entries that were
-  // found from target account.
-  const previousSourceDynamoEntries = await batchGetDynamoItems<DynamoEntryRow>(
-    {
-      tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-      hashKeyName: 'id',
-      valuesToFind: targetDynamoEntries.map((e) => ({ hashKey: e.mappedTo })),
-    },
-  );
-
   // If the entry is removed from source account, this means
   // that these entries should not be found from current source Toggl entries.
-  const deletedEntries = previousSourceDynamoEntries.differenceBy(
+  const deletedEntries = targetDynamoEntries.differenceBy(
     sourceTogglEntries,
     dynamoIteratee,
   );
