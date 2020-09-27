@@ -1,5 +1,7 @@
 # toggl-task-sync
 
+[![Actions Status](https://github.com/marinp1/toggl-2-toggl/workflows/Deploy%20to%20AWS/badge.svg)](https://github.com/marinp1/toggl-2-toggl//actions)
+
 Synchronise Toggl time entries between two Toggl accounts.
 
 Supports entry creation, modification and deletion with configuration options.
