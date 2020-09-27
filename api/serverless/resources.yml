@@ -5,7 +5,7 @@ Resources:
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: LambdaRole
+      RoleName: 'LambdaRole-${self:service}-${self:provider.region}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
