@@ -1,7 +1,5 @@
 # toggl-task-sync
 
-![AWS CodeBuild](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoidEprQkNiaDdwQ2x2bWd3blk5K29IVDVQY1ZkaHppWGVFU1ZnZUg1UWZTRmUxMXNqSXNPS2dacXJRSGZuS0U4SVc5WWhZV3Q1QzJxTzcxb1p0R0lGSXhJPSIsIml2UGFyYW1ldGVyU3BlYyI6Ikd2ZFFGRUpwNHBrb1pSTWsiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
-
 Synchronise Toggl time entries between two Toggl accounts.
 
 Supports entry creation, modification and deletion with configuration options.
@@ -67,7 +65,7 @@ Overrides can be given in the following format (note, each one is optional):
 
 ## Limitations
 
-- For safety, source entry is skipped if target account already contains an entry with same start time and duration
+- For safety, new source entries are skipped if target account already contains an entry with same start time and duration and it was not marked as a modified entry
 - Synchronisation interval cannot be changed
 - Having more than one active deployments can cause uninteded side-effects
 - Deletion and modification works only for tasks that were created with this tool
