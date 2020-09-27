@@ -37,5 +37,6 @@ jobs:
       uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
       with:
         name: toggl-sync-prod
+        capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_IAM
         template: ./api/.serverless/cloudformation-template-update-stack.json
 
