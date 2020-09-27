@@ -43,15 +43,31 @@ Array.prototype.uniqBy = function(iteratee) {
   );
 };
 
-interface FetchLatestEntriesResponse {
+interface FailureResponse {
   [label: string]: {
-    status: 'OK' | 'FAILURE';
-    error?: string;
-    modifiedEntries?: Record<string, TimeEntryRequest>;
-    newEntries?: TimeEntryRequest[];
-    deletedEntries?: string[];
+    status: 'FAILURE';
+    error: string;
   };
 }
+
+interface SuccessResponse {
+  [label: string]: {
+    status: 'OK';
+    output: {
+      modifiedEntries: Record<string, TimeEntryRequest>;
+      newEntries: TimeEntryRequest[];
+      deletedEntries: string[];
+    };
+    debug: {
+      entryMappings: any;
+      modifiedEntries: TimeEntryResponse[];
+      createdEntries: TimeEntryResponse[];
+      deletedEntries: DynamoEntryRow[];
+    };
+  };
+}
+
+type FetchLatestEntriesResponse = FailureResponse | SuccessResponse;
 
 interface ParseEntriesInput {
   sourceTogglEntries: TimeEntryResponse[];
@@ -248,9 +264,17 @@ export const fetchLatestEntries = async (
             return {
               [label]: {
                 status: 'OK',
-                newEntries: entriesToCreate,
-                modifiedEntries: entriesToModify,
-                deletedEntries: entriesToDelete,
+                output: {
+                  newEntries: entriesToCreate,
+                  modifiedEntries: entriesToModify,
+                  deletedEntries: entriesToDelete,
+                },
+                debug: {
+                  entryMappings,
+                  createdEntries: entriesToCreateRaw,
+                  modifiedEntries: entriesToModifyRaw,
+                  deletedEntries: entriesToDeleteRaw,
+                },
               },
             };
           } catch (e) {

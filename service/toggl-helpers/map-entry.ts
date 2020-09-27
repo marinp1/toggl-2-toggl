@@ -6,23 +6,15 @@ export const mapEntryForRequest = (
   entry: TimeEntryResponse,
   entryMappings: DynamoMapRow[],
 ): TimeEntryRequest | null => {
-  const mappingRows = entryMappings.filter(
-    (emp) => emp.sourceWid === String(entry.wid),
+  // Unique mapping row
+  const mappingRow = entryMappings.find(
+    (row) =>
+      row.sourceWid === String(entry.wid) &&
+      row.sourcePid === String(entry.pid || '*'),
   );
 
-  // If not found, return null
-  if (mappingRows.length === 0) return null;
-
-  // Unique mapping row
-  const pidMap = mappingRows.find((row) => row.sourcePid === String(entry.pid));
-
-  // Wildcard mapping row
-  const wildcardMap = mappingRows.find((row) => row.sourcePid === '*');
-
-  // If neither exist, skip entry
-  if (!pidMap || !wildcardMap) return null;
-
-  const mappingRow = pidMap || wildcardMap;
+  // If row was not found, return null
+  if (!mappingRow) return null;
 
   if (!mappingRow.targetWid) {
     throw new ConfigurationError('Target workspace ID not given');
@@ -39,7 +31,7 @@ export const mapEntryForRequest = (
   return {
     created_with: 'toggl-sync-app',
     wid: Number(mappingRow.targetWid),
-    pid: Number(mappingRow.targetPid) || undefined,
+    pid: mappingRow.targetPid ? Number(mappingRow.targetPid) : undefined,
     billable: (mappingRow.overrides && mappingRow.overrides.billable) || false,
     tags: (mappingRow.overrides && mappingRow.overrides.tags) || [],
     description:
