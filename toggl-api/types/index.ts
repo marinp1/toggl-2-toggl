@@ -25,8 +25,14 @@ export type ApiCall = {
   delete: (
     endpoint: string,
   ) => Promise<ApiCallResponse<{ statusCode: number }>>;
-  put: <T, U = {}>(endpoint: string, body: U) => Promise<ApiCallResponse<T>>;
-  post: <T, U = {}>(endpoint: string, body: U) => Promise<ApiCallResponse<T>>;
+  put: <T, U extends object = {}>(
+    endpoint: string,
+    body: U,
+  ) => Promise<ApiCallResponse<T>>;
+  post: <T, U extends object = {}>(
+    endpoint: string,
+    body: U,
+  ) => Promise<ApiCallResponse<T>>;
   getMultiple: <T = {}>(endpoint: string) => Promise<ApiCallResponse<T[]>>;
 };
 

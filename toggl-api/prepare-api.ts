@@ -21,6 +21,7 @@ const handleResponse = <T>(
     case 200:
       return resp.json();
     default:
+      console.debug(JSON.stringify({ togglResponse: resp }));
       return Promise.resolve({
         error: true,
         statusCode: resp.status,
@@ -38,6 +39,7 @@ const handlePlainResponse = (
         statusCode: resp.status,
       });
     default:
+      console.debug(JSON.stringify({ togglResponse: resp }));
       return Promise.resolve({
         error: true,
         statusCode: resp.status,
@@ -90,10 +92,10 @@ const constructApi = (togglApiToken: string): ApiCall => {
       }) as Promise<TypedResponse<T[]>>)
         .then(handleResponse)
         .then(mapResponse),
-    post: <T, U>(endpoint: string, body: U) =>
+    post: <T, U extends object>(endpoint: string, body: U) =>
       (fetch(endpoint, {
         headers,
-        body: JSON.stringify(body) as string,
+        body: (JSON.stringify({ time_entry: body }) as unknown) as string,
         method: 'POST',
       }) as Promise<TypedResponse<TogglWrapper<T>>>)
         .then(handleResponse)
@@ -101,7 +103,7 @@ const constructApi = (togglApiToken: string): ApiCall => {
     put: <T, U>(endpoint: string, body: U) =>
       (fetch(endpoint, {
         headers,
-        body: JSON.stringify(body) as string,
+        body: (JSON.stringify({ time_entry: body }) as unknown) as string,
         method: 'PUT',
       }) as Promise<TypedResponse<TogglWrapper<T>>>)
         .then(handleResponse)
