@@ -1,6 +1,6 @@
 # toggl-task-sync
 
-[![Actions Status](https://github.com/marinp1/toggl-2-toggl/workflows/Deploy%20to%20AWS/badge.svg)](https://github.com/marinp1/toggl-2-toggl//actions)
+[![Actions Status](https://github.com/marinp1/toggl-2-toggl/workflows/Deploy%20to%20AWS/badge.svg)](https://github.com/marinp1/toggl-2-toggl/ad/actions)
 
 Synchronise Toggl time entries between two Toggl accounts.
 
@@ -15,6 +15,13 @@ curl --request POST \
 ```
 
 Response contains a record of tasks and statuses.
+
+## Why
+
+I have two Toggl account (work & personal) and I like to avoid writing duplicate entries whenever possible. I however like to spend 100x the time for building an overly complicated tool that automates that process.
+
+At the same time, I wanted to try out the tree-shaking from `serverless-webpack` and wrote the tool to be as tiny as possible. It seemed to work, and at the moment the largest Lambda function's size is only
+`12.4 kilobytes`, and the Lambda reads & writes to _DynamoDB_, fetches parameters from _Systems Manager_ and also accesses _Toggl API_.
 
 ## Configuration
 
@@ -67,17 +74,30 @@ Overrides can be given in the following format (note, each one is optional):
 
 ## Development
 
-TODO
+Local development is bit tricky since the application uses references to AWS Systems Manager, DynamoDB and also fetches / sends information to Toggl API.
+
+Tool uses yarn workspaces and is divided into three parts:
+
+- **api** contains serverless functions
+- **service** contains all kind of helpers / internal logic that is used by serverless methods. Why this is it's own folder, don't know, probably shouldn't be.
+- **toggl-api** contains a wrapper for Toggl API calls
+
+### Requirements:
+
+- yarn
+- Node 12.x
 
 ## Deployment
 
 Continuous deployment is enabled on the `master` branch with a Github workflow, targeting production environment.
 
-Since workflow uses update stack template, an initial stack must be generated beforehand or Cloudformation creation fails. To do that, the following aws-cli command can be used:
+Workflow also requires Github secrets `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in order to run serverless commands.
 
-`aws cloudformation deploy --template-file ./.serverless/cloudformation-template-create-stack.json --stack-name toggl-sync-prod --capabilities CAPABILITY_NAMED_IAM CAPABILITY_IAM --profile {{profilename}}`
+Deployment can also be triggered with the following command:
 
-Workflow also requires Github secrets `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in order to deploy Cloudformation stacks.
+```
+npx serverless deploy --stage {{ENV}}
+```
 
 ## Limitations
 
