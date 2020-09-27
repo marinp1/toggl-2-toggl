@@ -1,5 +1,5 @@
 service: toggl-sync
-app: toggl-2-toggl
+app: toggl-sync
 org: marinp1
 
 package:
