@@ -16,7 +16,7 @@ export const modifyEntries = async (params: {
     [mappedFrom: string]: EnrichedWithMap<TimeEntryRequest> | null;
   };
 }): Promise<{
-  successes: Record<string, EnrichedWithMap<TimeEntryResponse>>;
+  successes: Record<string, TimeEntryResponse>;
   failures: string[];
 }> => {
   const { apiToken, requests } = params;

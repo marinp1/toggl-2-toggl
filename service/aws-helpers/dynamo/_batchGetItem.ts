@@ -1,9 +1,5 @@
 import { chunk } from 'lodash-es';
-import DynamoDB, {
-  BatchGetItemInput,
-  KeyList,
-  Key,
-} from 'aws-sdk/clients/dynamodb';
+import { BatchGetItemInput, Key } from 'aws-sdk/clients/dynamodb';
 import { getDynamoClient } from './getDynamoClient';
 
 import { valueToAttributeValue, parseDynamoItem } from './dynamoValueMappers';
@@ -24,7 +20,7 @@ export const batchGetDynamoItems = async <ResponseItemType>(
   const client = getDynamoClient();
 
   if (!tableName) {
-    throw new Error('Table name is required for query');
+    throw new Error('Table name is required for batchGetItems');
   }
 
   // Split into max 100 items per requests

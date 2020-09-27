@@ -2,6 +2,7 @@ import {
   getSSMParameters,
   queryDynamoTableGSI,
   batchGetDynamoItems,
+  batchWriteDynamoItems,
 } from 'service/aws-helpers';
 
 import {
@@ -229,8 +230,44 @@ export const syncEntries = async (
               requests: entriesToCreate,
             });
 
-            // Send requests to Toggl
+            // Items to delete from DynamoDB
+            const dynamoItemsToDelete = deleteResults.successes.map((drs) => ({
+              hashKey: drs,
+            }));
+
+            // Items to add to DynamoDB
+            const dynamoItemsToCreate: DynamoEntryRow[] = Object.entries(
+              createResults.successes,
+            ).map(([key, entry]) => ({
+              id: key,
+              lastUpdated: entry.at,
+              mappedTo: String(entry.id),
+            }));
+
+            // Items to modify in DynamoDB (overwrite)
+            const dynamoItemsToModify: DynamoEntryRow[] = Object.entries(
+              modifyResults.successes,
+            ).map(([key, entry]) => ({
+              id: key,
+              lastUpdated: entry.at,
+              mappedTo: String(entry.id),
+            }));
+
             // Write dynamoDB rows
+            const batchWriteResult = await batchWriteDynamoItems<
+              DynamoEntryRow
+            >({
+              tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
+              hashKeyName: 'id',
+              itemsToDelete: dynamoItemsToDelete,
+              itemsToPut: [...dynamoItemsToCreate, ...dynamoItemsToModify],
+            });
+
+            console.debug(
+              JSON.stringify({
+                batchWriteResult,
+              }),
+            );
 
             return {
               [label]: {

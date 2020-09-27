@@ -14,7 +14,6 @@ export type DynamoMapRow = DynamoMapValue<{
 }>;
 
 export type DynamoEntryRow = DynamoMapValue<{
-  type: 'source-entry' | 'target-entry';
   id: string; // id
   lastUpdated: string;
   mappedTo: string; // id

@@ -3,7 +3,7 @@ import { ApiMethod, TimeEntryResponse, TimeEntryRequest } from '../types';
 import { EnrichedWithMap } from 'service/types';
 
 export const updateEntry: ApiMethod<
-  Record<string, EnrichedWithMap<TimeEntryResponse>>,
+  Record<string, TimeEntryResponse>,
   [string, EnrichedWithMap<TimeEntryRequest>]
 > = (apiCall) => async (entryId, entry) => {
   const response = await apiCall.put<TimeEntryResponse>(
@@ -18,6 +18,6 @@ export const updateEntry: ApiMethod<
     );
 
   return {
-    [entryId]: { ...response.data, __mappedTo: entry.__mappedTo },
+    [entryId]: response.data,
   };
 };
