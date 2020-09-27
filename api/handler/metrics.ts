@@ -1,5 +1,5 @@
 import { formatDistance, formatISO } from 'date-fns';
-import { successResponse, errorResponse } from 'service';
+import { successResponse, errorResponse } from 'service/lambda-helpers';
 import { LambdaEvent, LambdaResponse } from 'service/types';
 
 interface AppInformation {

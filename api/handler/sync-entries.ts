@@ -1,12 +1,22 @@
 import {
-  successResponse,
-  errorResponse,
   getSSMParameters,
-  fetchLatestTogglEntries,
   queryDynamoTableGSI,
   batchGetDynamoItems,
+} from 'service/aws-helpers';
+
+import {
+  fetchLatestTogglEntries,
   mapEntryForRequest,
-} from 'service';
+  parseEntries,
+} from 'service/toggl-helpers';
+
+import { successResponse, errorResponse } from 'service/lambda-helpers';
+
+import {
+  useDifferenceBy,
+  useIntersectBy,
+  useUniqBy,
+} from 'service/array-helpers';
 
 import {
   LambdaEvent,
@@ -17,31 +27,6 @@ import {
 } from 'service/types';
 
 import { TimeEntryResponse, TimeEntryRequest } from 'toggl-api/types';
-
-Array.prototype.intersectBy = function(arr, iteratee) {
-  const setA = new Set(this.map(iteratee));
-  const setB = new Set(arr.map(iteratee));
-  const intersectionList = new Set([...setA].filter((x) => setB.has(x)));
-  return this.filter((x) => intersectionList.has(iteratee(x)));
-};
-
-Array.prototype.differenceBy = function(arr, iteratee) {
-  const setA = new Set(this.map(iteratee));
-  const setB = new Set(arr.map(iteratee));
-  const intersectionList = new Set([...setA].filter((x) => setB.has(x)));
-  return this.filter((x) => !intersectionList.has(iteratee(x)));
-};
-
-Array.prototype.uniq = function() {
-  return [...new Set(this)];
-};
-
-Array.prototype.uniqBy = function(iteratee) {
-  return this.filter(
-    (val, ind, self) =>
-      self.findIndex((val2) => iteratee(val2) === iteratee(val)) === ind,
-  );
-};
 
 interface FailureResponse {
   [label: string]: {
@@ -54,9 +39,9 @@ interface SuccessResponse {
   [label: string]: {
     status: 'OK';
     output: {
-      modifiedEntries: Record<string, TimeEntryRequest>;
-      newEntries: TimeEntryRequest[];
-      deletedEntries: string[];
+      entriesToModify: Record<string, TimeEntryRequest>;
+      entriesToCreate: TimeEntryRequest[];
+      entriesToDelete: string[];
     };
     debug: {
       entryMappings: any;
@@ -69,82 +54,13 @@ interface SuccessResponse {
 
 type FetchLatestEntriesResponse = FailureResponse | SuccessResponse;
 
-interface ParseEntriesInput {
-  sourceTogglEntries: TimeEntryResponse[];
-  targetTogglEntries: TimeEntryResponse[];
-  sourceDynamoEntries: DynamoEntryRow[];
-  targetDynamoEntries: DynamoEntryRow[];
-}
-
-const parseEntries = async (params: ParseEntriesInput) => {
-  const {
-    sourceTogglEntries,
-    targetTogglEntries,
-    sourceDynamoEntries,
-    targetDynamoEntries,
-  } = params;
-
-  const dynamoIteratee = (val: { id: string | number }) => String(val.id);
-
-  const togglIteratee = (val: Pick<TimeEntryResponse, 'duration' | 'start'>) =>
-    `${val.duration}${val.start}`;
-
-  // Time entries that exist in Toggl but are not processed
-  // i.e. exist in Toggl but not in Dynamo
-  const unprocessedEntries = sourceTogglEntries.differenceBy(
-    sourceDynamoEntries,
-    dynamoIteratee,
-  );
-
-  // Time entries that were created, i.e.
-  // Do not have a match in target Toggl
-  const newEntries = unprocessedEntries.differenceBy(
-    targetTogglEntries,
-    togglIteratee,
-  );
-
-  // Time entries that exist in Toggl and are already processed
-  // Either skip or modify these entries
-  const existingEntries = sourceTogglEntries.intersectBy(
-    sourceDynamoEntries,
-    dynamoIteratee,
-  );
-
-  // If the entry in Toggl was updated after last sync,
-  // mark the entry to be modified
-  const modifiedEntries = existingEntries.filter(
-    (te) =>
-      sourceDynamoEntries.find((de) => String(de.id) === String(te.id))!
-        .lastUpdated < te.at,
-  );
-
-  // Fetch mapped DynamoDB entries for the Toggl entries that were
-  // found from target account.
-  const previousSourceDynamoEntries = await batchGetDynamoItems<DynamoEntryRow>(
-    {
-      tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-      hashKeyName: 'id',
-      valuesToFind: targetDynamoEntries.map((e) => ({ hashKey: e.mappedTo })),
-    },
-  );
-
-  // If the entry is removed from source account, this means
-  // that these entries should not be found from current source Toggl entries.
-  const deletedEntries = previousSourceDynamoEntries.differenceBy(
-    sourceTogglEntries,
-    dynamoIteratee,
-  );
-
-  return {
-    entriesToCreateRaw: newEntries,
-    entriesToDeleteRaw: deletedEntries,
-    entriesToModifyRaw: modifiedEntries,
-  };
-};
-
-export const fetchLatestEntries = async (
+export const syncEntries = async (
   event: LambdaEvent,
 ): LambdaResponse<FetchLatestEntriesResponse> => {
+  useDifferenceBy();
+  useIntersectBy();
+  useUniqBy();
+
   try {
     // 1. Get active tasks from dynamo
     // 2. Get SSM parameters related tasks
@@ -265,9 +181,9 @@ export const fetchLatestEntries = async (
               [label]: {
                 status: 'OK',
                 output: {
-                  newEntries: entriesToCreate,
-                  modifiedEntries: entriesToModify,
-                  deletedEntries: entriesToDelete,
+                  entriesToCreate,
+                  entriesToModify,
+                  entriesToDelete,
                 },
                 debug: {
                   entryMappings,

@@ -17,11 +17,11 @@ metrics:
         private: true
 
 latest:
-  handler: handler/fetch-entries.fetchLatestEntries
-  description: fetch latest entries from Toggl
+  handler: handler/sync-entries.syncEntries
+  description: syncronise entries between accounts
   timeout: 10
   events:
     - http:
-        path: entries/latest
-        method: GET
+        path: sync
+        method: POST
         private: true
