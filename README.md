@@ -105,5 +105,4 @@ npx serverless deploy --stage {{ENV}}
 - Synchronisation interval cannot be changed
 - Having more than one active deployments can cause uninteded side-effects
 - Deletion and modification works only for tasks that were created with this tool
-- Initial Cloudformation stack must ne created manually
 - CI / CD environment is only enabled for prod.
