@@ -25,3 +25,4 @@ sync:
         path: sync
         method: POST
         private: true
+    - schedule: rate(2 hours)
