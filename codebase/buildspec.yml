@@ -1,0 +1,25 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      nodejs: 12
+    commands:
+      - cd codebase
+      - npm install --silent --no-progress -g npm
+      - npm install --silent --no-progress -g serverless
+  pre_build:
+    commands:
+      - npm install --silent --no-progress
+  build:
+    commands:
+      - npm run lint
+      - mkdir -p target/dev
+      - serverless package --package target/dev --stage dev -v -r eu-central-1
+
+artifacts:
+  files:
+    - codebase/target/**/*
+    - codebase/serverless.yml
+    - codebase/serverless/**/*
+    - codebase/package.json
+    - codebase/deploy.sh

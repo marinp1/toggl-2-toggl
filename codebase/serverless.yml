@@ -6,12 +6,15 @@ service: toggl-2-toggl
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
+package:
+  individually: true
+
 provider:
   name: aws
   runtime: nodejs10.x
 
   stage: ${opt:stage}
-  region: ${file(./serverless/variables/${self:provider.stage}.yml):region}
+  region: ${file(./serverless/variables/${self:provider.stage}.yml):REGION}
 
   apiKeys:
     - ${self:service}-${self:provider.stage}-apiKey
@@ -22,13 +25,12 @@ provider:
     API_VERSION: ${file(./package.json):version}
     APP_NAME: ${self:service}
     APP_STAGE: ${self:provider.stage}
-    TELEGRAM_API_TOKEN: ${file(./.env.yml):TELEGRAM.API_TOKEN}
-    TOGGL_API_TOKEN_FROM: ${file(./.env.yml):TOGGL.FROM.API_TOKEN}
-    TOGGL_THESIS_PROJECT_ID_FROM: ${file(./.env.yml):TOGGL.FROM.THESIS_PROJECT_ID}
-    TOGGL_API_TOKEN_TO: ${file(./.env.yml):TOGGL.TO.API_TOKEN}
-    TOGGL_WORKSPACE_ID_TO: ${file(./.env.yml):TOGGL.TO.WORKSPACE_ID}
-    TOGGL_THESIS_PROJECT_ID_TO: ${file(./.env.yml):TOGGL.TO.THESIS_PROJECT_ID}
-    TOGGL_WORK_PROJECT_ID_TO: ${file(./.env.yml):TOGGL.TO.WORK_PROJECT_ID}
+    TELEGRAM_API_TOKEN: ${file(./serverless/variables/${self:provider.stage}.yml):TELEGRAM.API_TOKEN}
+    TOGGL_API_TOKEN_FROM: ${file(./serverless/variables/${self:provider.stage}.yml):TOGGL.FROM.API_TOKEN}
+    TOGGL_THESIS_PROJECT_ID_FROM: ${file(./serverless/variables/${self:provider.stage}.yml):TOGGL.FROM.THESIS_PROJECT_ID}
+    TOGGL_API_TOKEN_TO: ${file(./serverless/variables/${self:provider.stage}.yml):TOGGL.TO.API_TOKEN}
+    TOGGL_THESIS_PROJECT_ID_TO: ${file(./serverless/variables/${self:provider.stage}.yml):TOGGL.TO.THESIS_PROJECT_ID}
+    TOGGL_WORK_PROJECT_ID_TO: ${file(./serverless/variables/${self:provider.stage}.yml):TOGGL.TO.WORK_PROJECT_ID}
 
   stackTags:
     CostCentre: patrikmarin-apps
@@ -67,6 +69,13 @@ custom:
         sources:
           - table: ${self:custom.timeEntriesTableName}
             sources: [./test/tasks.json]
+  webpack:
+    webpackConfig: "webpack.config.js" # Name of webpack configuration file
+    packager: "npm" # Packager that will be used to package your external modules
+    excludeFiles: test/**/*.js # Provide a glob for files to ignore
+    includeModules:
+      forceExclude:
+        - aws-sdk
 
 plugins:
   - serverless-webpack

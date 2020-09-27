@@ -4,6 +4,7 @@ import { DynamoDB as AWSDynamoDB } from 'aws-sdk';
 import { IResponse, IError } from '@types';
 
 import * as db from './models';
+
 export * from './api';
 
 const options = {
