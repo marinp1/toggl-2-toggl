@@ -48,18 +48,18 @@ module.exports = {
       },
     ],
   },
-  plugins: [
-    /*
-    new BundleAnalyzerPlugin({
-      analyzerMode: 'static',
-    }),
-    */
-  ],
+  plugins: process.env.ANALYZE_BUNDLE
+    ? [
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+        }),
+      ]
+    : [],
   optimization: {
     sideEffects: true,
     usedExports: true,
-    minimize: true, //false,
-    concatenateModules: true, //false,
+    minimize: !process.env.ANALYZE_BUNDLE,
+    concatenateModules: !process.env.ANALYZE_BUNDLE,
     innerGraph: true,
   },
   externals: [

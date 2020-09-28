@@ -5,6 +5,7 @@
   "description": "Sync entries from one Toggl account to another",
   "main": "index.js",
   "scripts": {
+    "analyze-bundle": "ANALYZE_BUNDLE=true yarn package:dev",
     "package:dev": "serverless package --stage dev",
     "postpackage:dev": "stat -f %z .serverless/sync.zip",
     "start:offline": "serverless offline",
