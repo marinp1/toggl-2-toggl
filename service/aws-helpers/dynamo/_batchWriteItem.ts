@@ -1,4 +1,4 @@
-import { chunk } from 'lodash-es';
+import chunk from 'lodash.chunk';
 
 import {
   BatchWriteItemInput,
