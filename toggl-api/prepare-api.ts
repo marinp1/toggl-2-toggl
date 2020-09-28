@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { ConfigurationError } from 'service/errors';
 
 import {
@@ -9,6 +8,9 @@ import {
   ApiCallErrorResponse,
   ApiCallSuccessResponse,
 } from './types';
+
+// Fetch import statement is broken, workaround for typed import
+const fetch = require('node-fetch') as typeof import('node-fetch').default;
 
 type TogglWrapper<T> = {
   data: T;

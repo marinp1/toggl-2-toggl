@@ -14,7 +14,6 @@ module.exports = {
   target: 'node',
   mode: 'production',
   resolve: {
-    alias: {},
     modules: ['node_modules', commonNodeModulesPath],
     extensions: ['.ts', '.js'],
     symlinks: true,
