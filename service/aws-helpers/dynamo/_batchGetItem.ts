@@ -1,8 +1,10 @@
 import chunk from 'lodash.chunk';
 import { BatchGetItemInput, Key } from 'aws-sdk/clients/dynamodb';
-import { getDynamoClient } from './getDynamoClient';
 
+import { getDynamoClient } from './getDynamoClient';
 import { valueToAttributeValue, parseDynamoItem } from './dynamoValueMappers';
+
+import { DynamoError } from '../../errors';
 
 import { DynamoMapValue, DynamoSingleValue } from '../../types';
 
@@ -59,9 +61,10 @@ export const batchGetDynamoItems = async <ResponseItemType>(
         } catch (err) {
           console.debug(batchGetItemInput);
           console.debug(err);
-          throw new Error(
+          throw new DynamoError(
             `Failed to batch get items from ${tableName} with hash key ${hashKeyName} and range key ${rangeKeyName ||
               '[none]'} with values ${Object.keys(valueChunk).join(', ')}`,
+            -1,
           );
         }
       }),

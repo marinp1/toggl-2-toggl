@@ -1,12 +1,6 @@
 import { prepareApi, deleteEntry } from 'toggl-api';
 
-const isFulfilled = <T>(
-  val: PromiseSettledResult<T>,
-): val is PromiseFulfilledResult<T> => val.status === 'fulfilled';
-
-const isRejected = <T>(
-  val: PromiseSettledResult<T>,
-): val is PromiseRejectedResult => val.status === 'rejected';
+import { isFulfilled, isRejected } from '../utils';
 
 export const deleteEntries = async (params: {
   apiToken: string;

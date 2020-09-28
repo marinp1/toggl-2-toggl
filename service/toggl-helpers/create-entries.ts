@@ -1,13 +1,7 @@
 import { prepareApi, createEntry } from 'toggl-api';
 import { TimeEntryRequest, TimeEntryResponse } from 'toggl-api/types';
 
-const isFulfilled = <T>(
-  val: PromiseSettledResult<T>,
-): val is PromiseFulfilledResult<T> => val.status === 'fulfilled';
-
-const isRejected = <T>(
-  val: PromiseSettledResult<T>,
-): val is PromiseRejectedResult => val.status === 'rejected';
+import { isFulfilled, isRejected } from '../utils';
 
 export const createEntries = async (params: {
   apiToken: string;

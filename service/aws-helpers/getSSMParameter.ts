@@ -1,9 +1,11 @@
 import AWS from 'aws-sdk';
 
+import { ConfigurationError, InvalidRequestError } from '../errors';
+
 export const getSSMParameters = async (...parameterNames: string[]) => {
   const { APP_NAME, APP_STAGE } = process.env;
   if (!APP_NAME || !APP_STAGE) {
-    throw new Error('Missing environment variables');
+    throw new ConfigurationError('Missing environment variables');
   }
 
   const SSM = new AWS.SSM();
@@ -19,8 +21,9 @@ export const getSSMParameters = async (...parameterNames: string[]) => {
     data.Parameters[0].Value.split(/[\r\n]+/);
 
   if (!parameters) {
-    throw new Error(
+    throw new InvalidRequestError(
       `Failed to find SSM parameter with name ${APP_NAME}-${APP_STAGE}`,
+      -1,
     );
   }
 
@@ -38,10 +41,11 @@ export const getSSMParameters = async (...parameterNames: string[]) => {
   if (parameterNames.some((paramName) => !response[paramName])) {
     console.debug(`Found keys ${Object.keys(response).join(',')}`);
 
-    throw new Error(
+    throw new InvalidRequestError(
       `Some of the parameters were not found from SSM [${parameterNames.join(
         ', ',
       )}], please validate that configuration is correct.`,
+      -1,
     );
   }
 

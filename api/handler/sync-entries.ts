@@ -20,6 +20,7 @@ import {
   useDifferenceBy,
   useIntersectBy,
   useUniqBy,
+  useUniq,
 } from 'service/array-helpers';
 
 import {

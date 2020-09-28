@@ -3,6 +3,8 @@ import { getDynamoClient } from './getDynamoClient';
 
 import { valueToAttributeValue, parseDynamoItem } from './dynamoValueMappers';
 
+import { DynamoError } from '../../errors';
+
 import { DynamoSingleValue } from '../../types';
 
 interface GSIQueryParams<T> {
@@ -37,10 +39,11 @@ export const queryDynamoTableGSI = async <ResponseItemType>(
   } catch (err) {
     console.debug(JSON.stringify(queryInput));
     console.debug(err);
-    throw new Error(
+    throw new DynamoError(
       `Failed to query ${tableName} index ${gsiName} with ${String(
         valueToFind,
       )}`,
+      -1,
     );
   }
 };

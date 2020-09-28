@@ -12,6 +12,8 @@ import { getDynamoClient } from './getDynamoClient';
 
 import { valueToAttributeValue } from './dynamoValueMappers';
 
+import { DynamoError } from '../../errors';
+
 import { DynamoMapValue, DynamoSingleValue } from '../../types';
 
 interface DynamoWriteItemParams<T extends DynamoMapValue> {
@@ -82,7 +84,10 @@ export const batchWriteDynamoItems = async <ResponseItemType>(
         } catch (err) {
           console.debug(batchWriteItemInput);
           console.debug(err);
-          throw new Error(`Failed to batch write items to ${tableName}`);
+          throw new DynamoError(
+            `Failed to batch write items to ${tableName}`,
+            -1,
+          );
         }
       }),
     )

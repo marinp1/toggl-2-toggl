@@ -5,6 +5,8 @@
   "description": "Sync entries from one Toggl account to another",
   "main": "index.js",
   "scripts": {
+    "package:dev": "serverless package --stage dev",
+    "postpackage:dev": "stat -f %z .serverless/sync.zip",
     "start:offline": "serverless offline",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
