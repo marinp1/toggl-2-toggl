@@ -10,7 +10,7 @@ import { getDynamoClient } from './getDynamoClient';
 
 import { valueToAttributeValue } from './dynamoValueMappers';
 
-import { DynamoError } from '../../errors';
+import { DynamoError, ConfigurationError } from '../../errors';
 
 import { DynamoMapValue, DynamoSingleValue } from '../../types';
 
@@ -38,7 +38,7 @@ export const batchWriteDynamoItems = async <ResponseItemType>(
   const client = getDynamoClient();
 
   if (!tableName) {
-    throw new Error('Table name is required for batchWriteItems');
+    throw new ConfigurationError('Table name is required for batchWriteItems');
   }
 
   const deleteRequests: WriteRequest[] = itemsToDelete.map(

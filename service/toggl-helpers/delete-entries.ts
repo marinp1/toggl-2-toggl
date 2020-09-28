@@ -1,4 +1,5 @@
-import { prepareApi, deleteEntry } from 'toggl-api';
+import { prepareApi } from 'toggl-api/prepare-api';
+import { deleteEntry } from 'toggl-api/time-entries';
 
 import { isFulfilled, isRejected } from '../utils';
 

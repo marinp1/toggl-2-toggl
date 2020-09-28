@@ -3,7 +3,7 @@ import { getDynamoClient } from './getDynamoClient';
 
 import { valueToAttributeValue, parseDynamoItem } from './dynamoValueMappers';
 
-import { DynamoError } from '../../errors';
+import { DynamoError, ConfigurationError } from '../../errors';
 
 import { DynamoSingleValue } from '../../types';
 
@@ -20,7 +20,7 @@ export const queryDynamoTableGSI = async <ResponseItemType>(
   const client = getDynamoClient();
 
   if (!tableName) {
-    throw new Error('Table name is required for query');
+    throw new ConfigurationError('Table name is required for query');
   }
 
   const queryInput: QueryInput = {

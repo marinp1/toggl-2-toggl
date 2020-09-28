@@ -273,12 +273,6 @@ export const syncEntries = async (
               itemsToPut: [...dynamoItemsToCreate, ...dynamoItemsToModify],
             });
 
-            console.debug(
-              JSON.stringify({
-                batchWriteResult,
-              }),
-            );
-
             return {
               [label]: {
                 status: 'OK',

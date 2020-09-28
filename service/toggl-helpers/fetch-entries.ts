@@ -1,4 +1,5 @@
-import { prepareApi, getLatest } from 'toggl-api';
+import { prepareApi } from 'toggl-api/prepare-api';
+import { getLatest } from 'toggl-api/time-entries';
 
 export const fetchLatestTogglEntries = async (params: {
   apiToken: string;

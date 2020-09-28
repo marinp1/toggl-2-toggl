@@ -1,4 +1,7 @@
 import { AttributeValue, AttributeMap } from 'aws-sdk/clients/dynamodb';
+
+import { DynamoError } from '../../errors';
+
 import { DynamoSingleValue, DynamoValueType } from '../../types';
 
 export const valueToAttributeValue = (
@@ -13,10 +16,11 @@ export const valueToAttributeValue = (
     case 'number':
       return { N: String(val) };
     default:
-      throw new Error(
+      throw new DynamoError(
         `Unknown type of ${String(
           val,
         )} (${typeof val}), should be string, number or boolean`,
+        -1,
       );
   }
 };
@@ -42,7 +46,7 @@ const attributeValueToValue = (
       {},
     );
 
-  throw new Error(`Failed to map ${JSON.stringify(attributeValue)}`);
+  throw new DynamoError(`Failed to map ${JSON.stringify(attributeValue)}`, -1);
 };
 
 export const parseDynamoItem = <T extends AttributeMap>(val: T) =>

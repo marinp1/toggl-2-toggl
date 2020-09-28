@@ -1,4 +1,6 @@
-import { prepareApi, updateEntry } from 'toggl-api';
+import { prepareApi } from 'toggl-api/prepare-api';
+import { updateEntry } from 'toggl-api/time-entries';
+
 import { TimeEntryRequest, TimeEntryResponse } from 'toggl-api/types';
 import { EnrichedWithMap } from '../types';
 

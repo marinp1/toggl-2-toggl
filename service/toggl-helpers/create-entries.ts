@@ -1,7 +1,9 @@
-import { prepareApi, createEntry } from 'toggl-api';
-import { TimeEntryRequest, TimeEntryResponse } from 'toggl-api/types';
+import { prepareApi } from 'toggl-api/prepare-api';
+import { createEntry } from 'toggl-api/time-entries';
 
 import { isFulfilled, isRejected } from '../utils';
+
+import { TimeEntryRequest, TimeEntryResponse } from 'toggl-api/types';
 
 export const createEntries = async (params: {
   apiToken: string;
