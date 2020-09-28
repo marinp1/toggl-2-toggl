@@ -1,6 +1,8 @@
 import { TogglError, InvalidRequestError } from 'service/errors';
-import { formatRFC3339 } from 'date-fns';
 import { ApiMethod, TimeEntryResponse } from '../types';
+
+const parseDateToISOString = (date: Date | number) =>
+  new Date(date).toISOString();
 
 export const getBetween: ApiMethod<
   TimeEntryResponse[],
@@ -8,8 +10,8 @@ export const getBetween: ApiMethod<
 > = (apiCall) => async (params) => {
   const { startDate, endDate } = params;
 
-  const sd = encodeURIComponent(formatRFC3339(startDate));
-  const ed = encodeURIComponent(formatRFC3339(endDate));
+  const sd = encodeURIComponent(parseDateToISOString(startDate));
+  const ed = encodeURIComponent(parseDateToISOString(endDate));
 
   const response = await apiCall.getMultiple<TimeEntryResponse>(
     `https://api.track.toggl.com/api/v8/time_entries?start_date=${sd}&end_date=${ed}`,
@@ -17,9 +19,9 @@ export const getBetween: ApiMethod<
 
   if (response.error)
     throw new TogglError(
-      `Failed to get entries between ${formatRFC3339(
+      `Failed to get entries between ${parseDateToISOString(
         startDate,
-      )} and ${formatRFC3339(endDate)}`,
+      )} and ${parseDateToISOString(endDate)}`,
       response.error.statusCode,
     );
 
