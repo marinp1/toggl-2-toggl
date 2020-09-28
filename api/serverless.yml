@@ -58,6 +58,7 @@ custom:
     webpackConfig: '../webpack.config.js' # Name of webpack configuration file
     includeModules: false
     packager: 'yarn'
+    keepOutputDirectory: true
 
 plugins:
   - serverless-webpack

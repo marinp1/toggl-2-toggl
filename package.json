@@ -19,7 +19,8 @@
   },
   "homepage": "https://github.com/marinp1/toggl-2-toggl#readme",
   "devDependencies": {
-    "webpack": "^5.0.0-rc.0"
+    "webpack": "^5.0.0-rc.0",
+    "webpack-bundle-analyzer": "^3.9.0"
   },
   "dependencies": {
     "cache-loader": "^4.1.0",
