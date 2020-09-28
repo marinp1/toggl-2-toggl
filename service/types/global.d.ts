@@ -1,6 +1,7 @@
 export {}; // this file needs to be a module
 
 declare global {
+  type Await<T> = T extends PromiseLike<infer U> ? U : T;
   type Stringified<T> = T extends { toJSON(): infer U }
     ? U
     : T extends object

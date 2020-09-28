@@ -1,13 +1,15 @@
-import { ConfigurationError } from '../errors';
-
+import { TimeEntryResponse, TimeEntryRequest } from 'toggl-api/types';
 import {
-  EnrichedTimeEntryResponse,
-  TogglEntryRequest,
+  EnrichedWithMap,
   DynamoMapRow,
+  TogglEntryRequest,
+  DynamoEntryRow,
 } from '../types';
 
-export const mapEntryForRequest = (
-  entry: EnrichedTimeEntryResponse,
+import { ConfigurationError } from '../errors';
+
+const mapEntryForRequest = (
+  entry: EnrichedWithMap<TimeEntryResponse> | TimeEntryResponse,
   entryMappings: DynamoMapRow[],
 ): TogglEntryRequest => {
   // Unique mapping row
@@ -55,5 +57,59 @@ export const mapEntryForRequest = (
       duration: entry.duration,
     },
     __original: entry,
+  };
+};
+
+type Params = {
+  entriesToCreateRaw: TimeEntryResponse[];
+  entriesToModifyRaw: EnrichedWithMap<TimeEntryResponse>[];
+  entriesToDeleteRaw: DynamoEntryRow[];
+  entryMappings: DynamoMapRow[];
+};
+
+export const mapRawEntriesToRequests = ({
+  entriesToCreateRaw,
+  entriesToModifyRaw,
+  entriesToDeleteRaw,
+  entryMappings,
+}: Params) => {
+  const entriesToCreate = entriesToCreateRaw.reduce<
+    Record<string, TimeEntryRequest | null>
+  >(
+    (acc, e) => ({
+      ...acc,
+      [e.id]: mapEntryForRequest(e, entryMappings).entry,
+    }),
+    {},
+  );
+
+  const entriesToModify = entriesToModifyRaw.reduce<
+    Record<string, EnrichedWithMap<TimeEntryRequest> | null>
+  >(
+    (acc, e) => ({
+      ...acc,
+      [e.id]: (() => {
+        const mapping = mapEntryForRequest(e, entryMappings);
+        return {
+          ...mapping.entry,
+          __mappedTo: String(mapping.__original.__mappedTo),
+        };
+      })(),
+    }),
+    {},
+  );
+
+  const entriesToDelete = entriesToDeleteRaw.reduce<Record<string, string>>(
+    (acc, e) => ({
+      ...acc,
+      [e.id]: e.mappedTo,
+    }),
+    {},
+  );
+
+  return {
+    entriesToCreate,
+    entriesToModify,
+    entriesToDelete,
   };
 };

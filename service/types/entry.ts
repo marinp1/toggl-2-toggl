@@ -1,11 +1,8 @@
-import { TimeEntryResponse, TimeEntryRequest } from 'toggl-api/types';
-
-export type EnrichedTimeEntryResponse = TimeEntryResponse &
-  Partial<{ __mappedTo: string }>;
+import { TimeEntryRequest, TimeEntryResponse } from 'toggl-api/types';
 
 export type EnrichedWithMap<T> = T & { __mappedTo: string };
 
 export type TogglEntryRequest = {
   entry: TimeEntryRequest | null;
-  __original: EnrichedTimeEntryResponse;
+  __original: Partial<EnrichedWithMap<TimeEntryResponse>>;
 };

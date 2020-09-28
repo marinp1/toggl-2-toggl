@@ -1,19 +1,4 @@
-import {
-  getSSMParameters,
-  queryDynamoTableGSI,
-  batchGetDynamoItems,
-  batchWriteDynamoItems,
-} from 'service/aws-helpers';
-
-import {
-  fetchLatestTogglEntries,
-  mapEntryForRequest,
-  parseEntries,
-  deleteEntries,
-  modifyEntries,
-  createEntries,
-} from 'service/toggl-helpers';
-
+import { getSSMParameters, queryDynamoTableGSI } from 'service/aws-helpers';
 import { successResponse, errorResponse } from 'service/lambda-helpers';
 
 import {
@@ -28,12 +13,14 @@ import {
   LambdaResponse,
   DynamoTaskRow,
   DynamoEntryRow,
-  DynamoMapRow,
-  EnrichedTimeEntryResponse,
   EnrichedWithMap,
 } from 'service/types';
 
 import { TimeEntryResponse, TimeEntryRequest } from 'toggl-api/types';
+
+// Use default import since all of these procedures are needed
+// (increased compressed bundle size by 4 bytes)
+import * as procedures from 'service/procedures';
 
 interface FailureResponse {
   [label: string]: {
@@ -53,8 +40,8 @@ interface SuccessResponse {
     output: any;
     debug: {
       entryMappings: any;
-      modifiedEntries: EnrichedTimeEntryResponse[];
-      createdEntries: EnrichedTimeEntryResponse[];
+      modifiedEntries: EnrichedWithMap<TimeEntryResponse>[];
+      createdEntries: TimeEntryResponse[];
       deletedEntries: DynamoEntryRow[];
     };
   };
@@ -65,6 +52,7 @@ type FetchLatestEntriesResponse = FailureResponse | SuccessResponse;
 export const syncEntries = async (
   event: LambdaEvent,
 ): LambdaResponse<FetchLatestEntriesResponse> => {
+  // Use there array features
   useDifferenceBy();
   useIntersectBy();
   useUniqBy();
@@ -103,47 +91,23 @@ export const syncEntries = async (
 
             // Get Toggl time entries from last three days for both
             // source and target account
-            const [sourceTogglEntries, targetTogglEntries] = await Promise.all(
-              [sourceApiKeySSMRef, targetApiKeySSMRef].map(async (ssmName) =>
-                (
-                  await fetchLatestTogglEntries({
-                    apiToken: ssmValues[ssmName],
-                    days: 3,
-                  })
-                ).filter((entry) => entry.duration > 0),
-              ),
-            );
-
-            // Get matching DynamoDB entries for entries received from Toggl
-            // i.e. DynamoDB row id matches Toggl time entry id
-            const sourceDynamoEntriesPromise = batchGetDynamoItems<
-              DynamoEntryRow
-            >({
-              tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-              hashKeyName: 'id',
-              valuesToFind: sourceTogglEntries.map((e) => ({
-                hashKey: String(e.id),
-              })),
+            const [
+              sourceTogglEntries,
+              targetTogglEntries,
+            ] = await procedures.getLatestTogglEntries({
+              sourceApiKeyName: sourceApiKeySSMRef,
+              targetApiKeyName: targetApiKeySSMRef,
+              fetchedParameters: ssmValues,
             });
 
-            // FIXME: Inefficient query
-            const targetDynamoEntriesPromise = Promise.all(
-              targetTogglEntries.map(async (te) =>
-                queryDynamoTableGSI<DynamoEntryRow>({
-                  tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-                  gsiName: 'mappedTo',
-                  valueToFind: String(te.id),
-                }),
-              ),
-            ).then((res) => res.flat());
-
+            // Get entries from Dynamo for both account for comparison
             const [
               sourceDynamoEntries,
               targetDynamoEntries,
-            ] = await Promise.all([
-              sourceDynamoEntriesPromise,
-              targetDynamoEntriesPromise,
-            ]);
+            ] = await procedures.getDynamoEntries({
+              sourceTogglEntries,
+              targetTogglEntries,
+            });
 
             // Raw parsed values
             // i.e. no mapping applied
@@ -151,126 +115,49 @@ export const syncEntries = async (
               entriesToCreateRaw,
               entriesToDeleteRaw,
               entriesToModifyRaw,
-            } = await parseEntries({
+            } = await procedures.parseEntries({
               sourceTogglEntries,
               targetTogglEntries,
               sourceDynamoEntries,
               targetDynamoEntries,
             });
 
-            // Workspace IDs for all required entries
-            const spaceIds = [...entriesToCreateRaw, ...entriesToModifyRaw]
-              .flatMap((a) => [
-                {
-                  wid: String(a.wid),
-                  pid: a.pid ? String(a.pid) : '*',
-                },
-                {
-                  wid: String(a.wid),
-                  pid: '*',
-                },
-              ])
-              .uniqBy(({ wid, pid }) => `${wid}${pid}`);
-
             // Entry mappings for workspace IDs
-            const entryMappings = await batchGetDynamoItems<DynamoMapRow>({
-              tableName: process.env.DYNAMO_MAPPING_TABLE_NAME,
-              hashKeyName: 'sourceWid',
-              rangeKeyName: 'sourcePid',
-              valuesToFind: spaceIds.map(({ wid, pid }) => ({
-                hashKey: wid,
-                rangeKey: pid,
-              })),
+            const entryMappings = await procedures.getEntryMappings([
+              ...entriesToCreateRaw,
+              ...entriesToModifyRaw,
+            ]);
+
+            // Map raw values to requests and override
+            // required attributes
+            const {
+              entriesToDelete,
+              entriesToModify,
+              entriesToCreate,
+            } = procedures.mapRawEntriesToRequests({
+              entriesToCreateRaw,
+              entriesToDeleteRaw,
+              entriesToModifyRaw,
+              entryMappings,
             });
-
-            const entriesToCreate = entriesToCreateRaw.reduce<
-              Record<string, TimeEntryRequest | null>
-            >(
-              (acc, e) => ({
-                ...acc,
-                [e.id]: mapEntryForRequest(e, entryMappings).entry,
-              }),
-              {},
-            );
-
-            const entriesToModify = entriesToModifyRaw.reduce<
-              Record<string, EnrichedWithMap<TimeEntryRequest> | null>
-            >(
-              (acc, e) => ({
-                ...acc,
-                [e.id]: (() => {
-                  const mapping = mapEntryForRequest(e, entryMappings);
-                  return {
-                    ...mapping.entry,
-                    __mappedTo: String(mapping.__original.__mappedTo),
-                  };
-                })(),
-              }),
-              {},
-            );
-
-            const entriesToDelete = entriesToDeleteRaw.reduce<
-              Record<string, string>
-            >(
-              (acc, e) => ({
-                ...acc,
-                [e.id]: e.mappedTo,
-              }),
-              {},
-            );
 
             // Send results to target API
-            const targetApiToken = ssmValues[targetApiKeySSMRef];
-
-            // 1. Delete entries
-            const deleteResults = await deleteEntries({
-              apiToken: targetApiToken,
-              requests: entriesToDelete,
+            const {
+              deleteResults,
+              createResults,
+              modifyResults,
+            } = await procedures.writeEntriesToToggl({
+              apiToken: ssmValues[targetApiKeySSMRef],
+              entriesToCreate,
+              entriesToDelete,
+              entriesToModify,
             });
 
-            // 2. Modify entries
-            const modifyResults = await modifyEntries({
-              apiToken: targetApiToken,
-              requests: entriesToModify,
-            });
-
-            // 3. Create entries
-            const createResults = await createEntries({
-              apiToken: targetApiToken,
-              requests: entriesToCreate,
-            });
-
-            // Items to delete from DynamoDB
-            const dynamoItemsToDelete = deleteResults.successes.map((drs) => ({
-              hashKey: drs,
-            }));
-
-            // Items to add to DynamoDB
-            const dynamoItemsToCreate: DynamoEntryRow[] = Object.entries(
-              createResults.successes,
-            ).map(([key, entry]) => ({
-              id: key,
-              lastUpdated: entry.at,
-              mappedTo: String(entry.id),
-            }));
-
-            // Items to modify in DynamoDB (overwrite)
-            const dynamoItemsToModify: DynamoEntryRow[] = Object.entries(
-              modifyResults.successes,
-            ).map(([key, entry]) => ({
-              id: key,
-              lastUpdated: entry.at,
-              mappedTo: String(entry.id),
-            }));
-
-            // Write dynamoDB rows
-            const batchWriteResult = await batchWriteDynamoItems<
-              DynamoEntryRow
-            >({
-              tableName: process.env.DYNAMO_ENTRIES_TABLE_NAME,
-              hashKeyName: 'id',
-              itemsToDelete: dynamoItemsToDelete,
-              itemsToPut: [...dynamoItemsToCreate, ...dynamoItemsToModify],
+            // Update dynamo entries in database
+            await procedures.updateDynamoEntries({
+              deleteResults,
+              createResults,
+              modifyResults,
             });
 
             return {
