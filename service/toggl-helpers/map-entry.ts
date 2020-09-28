@@ -11,11 +11,18 @@ export const mapEntryForRequest = (
   entryMappings: DynamoMapRow[],
 ): TogglEntryRequest => {
   // Unique mapping row
-  const mappingRow = entryMappings.find(
+  const projectMappingRow = entryMappings.find(
     (row) =>
       row.sourceWid === String(entry.wid) &&
-      row.sourcePid === String(entry.pid || '*'),
+      row.sourcePid === String(entry.pid),
   );
+
+  // Wildcard mapping row
+  const wildcardMappingRow = entryMappings.find(
+    (row) => row.sourceWid === String(entry.wid) && row.sourcePid === '*',
+  );
+
+  const mappingRow = projectMappingRow || wildcardMappingRow;
 
   // If row was not found, return null
   if (!mappingRow) return { __original: entry, entry: null };
