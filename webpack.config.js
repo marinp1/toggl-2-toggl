@@ -37,10 +37,7 @@ module.exports = {
             loader: 'ts-loader',
             options: {
               happyPackMode: true,
-              transpileOnly: true,
-              compilerOptions: {
-                module: 'es2015',
-              },
+              transpileOnly: false,
             },
           },
         ],

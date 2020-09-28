@@ -16,9 +16,7 @@ export const getSSMParameters = async (...parameterNames: string[]) => {
   }).promise();
 
   const parameters =
-    data.Parameters &&
-    data.Parameters[0].Value &&
-    data.Parameters[0].Value.split(/[\r\n]+/);
+    data.Parameters && data.Parameters[0].Value?.split(/[\r\n]+/);
 
   if (!parameters) {
     throw new InvalidRequestError(
