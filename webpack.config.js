@@ -2,9 +2,7 @@
 const os = require('os');
 const path = require('path');
 const slsw = require('serverless-webpack');
-
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
-  .BundleAnalyzerPlugin;
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 const commonNodeModulesPath = path.resolve(
   __dirname,
@@ -51,15 +49,17 @@ module.exports = {
     ],
   },
   plugins: [
+    /*
     new BundleAnalyzerPlugin({
       analyzerMode: 'static',
     }),
+    */
   ],
   optimization: {
     sideEffects: true,
     usedExports: true,
-    minimize: false,
-    concatenateModules: false,
+    minimize: true, //false,
+    concatenateModules: true, //false,
     innerGraph: true,
   },
   externals: [
