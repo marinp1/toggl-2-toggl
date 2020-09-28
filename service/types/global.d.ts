@@ -28,5 +28,6 @@ declare global {
       arr: U[],
       iteratee: (value: Record<Extract<keyof U, keyof T>, any>) => string,
     ): T[];
+    chunk<U extends T>(size: number): Array<Array<U>>;
   }
 }

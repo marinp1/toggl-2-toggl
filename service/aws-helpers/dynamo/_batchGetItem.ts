@@ -1,4 +1,3 @@
-import chunk from 'lodash.chunk';
 import { BatchGetItemInput, Key } from 'aws-sdk/clients/dynamodb';
 
 import { getDynamoClient } from './getDynamoClient';
@@ -26,7 +25,7 @@ export const batchGetDynamoItems = async <ResponseItemType>(
   }
 
   // Split into max 100 items per requests
-  const chunkedValues = chunk(valuesToFind, 100);
+  const chunkedValues = valuesToFind.chunk(100);
 
   const items = (
     await Promise.all(

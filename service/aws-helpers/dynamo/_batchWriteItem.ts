@@ -1,5 +1,3 @@
-import chunk from 'lodash.chunk';
-
 import {
   BatchWriteItemInput,
   DeleteRequest,
@@ -64,7 +62,7 @@ export const batchWriteDynamoItems = async <ResponseItemType>(
   });
 
   // Split into max 100 items per requests
-  const chunkedRequests = chunk([...deleteRequests, ...putRequests], 25);
+  const chunkedRequests = [...deleteRequests, ...putRequests].chunk(25);
 
   const unprocessedItems = (
     await Promise.all(

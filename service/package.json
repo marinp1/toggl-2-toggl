@@ -12,11 +12,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "date-fns": "^2.16.1",
-    "lodash.chunk": "^4.2.0"
+    "date-fns": "^2.16.1"
   },
   "devDependencies": {
-    "@types/lodash.chunk": "^4.2.6",
     "aws-sdk": "^2.760.0"
   }
 }

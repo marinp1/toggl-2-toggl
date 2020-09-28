@@ -20,7 +20,7 @@ import {
   useDifferenceBy,
   useIntersectBy,
   useUniqBy,
-  useUniq,
+  useChunk,
 } from 'service/array-helpers';
 
 import {
@@ -68,6 +68,7 @@ export const syncEntries = async (
   useDifferenceBy();
   useIntersectBy();
   useUniqBy();
+  useChunk();
 
   try {
     // 1. Get active tasks from dynamo
