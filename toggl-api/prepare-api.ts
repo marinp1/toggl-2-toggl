@@ -1,52 +1,31 @@
+import { fetch } from './personal-fetch';
+
 import { ConfigurationError } from 'service/errors';
 
 import {
   ApiCall,
-  TypedResponse,
   ApiMethod,
   ErrorResponse,
   ApiCallErrorResponse,
   ApiCallSuccessResponse,
+  FetchResponse,
 } from './types';
-
-// Fetch import statement is broken, workaround for typed import
-const fetch = require('node-fetch') as typeof import('node-fetch').default;
 
 type TogglWrapper<T> = {
   data: T;
 };
 
-const handleResponse = <T>(
-  resp: TypedResponse<T>,
-): Promise<T | ErrorResponse> => {
-  switch (resp.status) {
+const handleResponse = <T>(resp: FetchResponse<T>): T | ErrorResponse => {
+  switch (resp.statusCode) {
     case 200:
-      return resp.json();
+      return (resp.body as unknown) as T;
     default:
       console.debug(JSON.stringify({ togglResponse: resp }));
-      return Promise.resolve({
+      return {
         error: true,
-        statusCode: resp.status,
+        statusCode: resp.statusCode,
         statusText: resp.statusText,
-      });
-  }
-};
-
-const handlePlainResponse = (
-  resp: TypedResponse<{}>,
-): Promise<{ statusCode: number } | ErrorResponse> => {
-  switch (resp.status) {
-    case 200:
-      return Promise.resolve({
-        statusCode: resp.status,
-      });
-    default:
-      console.debug(JSON.stringify({ togglResponse: resp }));
-      return Promise.resolve({
-        error: true,
-        statusCode: resp.status,
-        statusText: resp.statusText,
-      });
+      };
   }
 };
 
@@ -81,41 +60,46 @@ const constructApi = (togglApiToken: string): ApiCall => {
 
   return {
     get: <T>(endpoint: string) =>
-      (fetch(endpoint, {
+      fetch<TogglWrapper<T>, T>({
+        url: endpoint,
         headers,
         method: 'GET',
-      }) as Promise<TypedResponse<TogglWrapper<T>>>)
+      })
         .then(handleResponse)
         .then(mapResponse),
     getMultiple: <T>(endpoint: string) =>
-      (fetch(endpoint, {
+      fetch<T[], T>({
+        url: endpoint,
         headers,
         method: 'GET',
-      }) as Promise<TypedResponse<T[]>>)
+      })
         .then(handleResponse)
         .then(mapResponse),
     post: <T, U extends object>(endpoint: string, body: U) =>
-      (fetch(endpoint, {
+      fetch<TogglWrapper<T>, { time_entry: U }>({
+        url: endpoint,
         headers,
-        body: (JSON.stringify({ time_entry: body }) as unknown) as string,
+        data: { time_entry: body },
         method: 'POST',
-      }) as Promise<TypedResponse<TogglWrapper<T>>>)
+      })
         .then(handleResponse)
         .then(mapResponse),
     put: <T, U>(endpoint: string, body: U) =>
-      (fetch(endpoint, {
+      fetch<TogglWrapper<T>, { time_entry: U }>({
+        url: endpoint,
         headers,
-        body: (JSON.stringify({ time_entry: body }) as unknown) as string,
+        data: { time_entry: body },
         method: 'PUT',
-      }) as Promise<TypedResponse<TogglWrapper<T>>>)
+      })
         .then(handleResponse)
         .then(mapResponse),
     delete: (endpoint: string) =>
-      (fetch(endpoint, {
+      fetch({
+        url: endpoint,
         headers,
         method: 'DELETE',
-      }) as Promise<TypedResponse<{}>>)
-        .then(handlePlainResponse)
+      })
+        .then(handleResponse)
         .then(mapResponse),
   };
 };

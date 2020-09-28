@@ -1,10 +1,8 @@
-import { Response } from 'node-fetch';
-
-export type TypedResponse<T extends object | {} = {}> = Omit<
-  Response,
-  'json'
-> & {
-  json: () => Promise<T>;
+export type FetchResponse<T> = {
+  statusCode: number;
+  statusText: string;
+  body?: T;
+  error?: Error;
 };
 
 export type ErrorResponse = {
@@ -22,9 +20,7 @@ export type ApiCallResponse<T> =
 
 export type ApiCall = {
   get: <T = {}>(endpoint: string) => Promise<ApiCallResponse<T>>;
-  delete: (
-    endpoint: string,
-  ) => Promise<ApiCallResponse<{ statusCode: number }>>;
+  delete: (endpoint: string) => Promise<ApiCallResponse<unknown>>;
   put: <T, U extends object = {}>(
     endpoint: string,
     body: U,
